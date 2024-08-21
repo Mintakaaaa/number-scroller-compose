@@ -42,6 +42,7 @@ android {
 dependencies {
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.material3.android)
+    implementation(kotlin("script-runtime"))
 }
 
 afterEvaluate {
