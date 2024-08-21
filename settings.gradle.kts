@@ -20,5 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "number-scroller-compose"
-include(":app")
+include(":sample")
 include(":number-scroller-compose")

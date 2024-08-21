@@ -49,7 +49,7 @@ data class ScrollerStyle(
     val lineThickness: Dp = 4.dp,
     val lineWidthFactor: Float = 0.8f,
     val numberFontSize: TextUnit = 30.sp,
-    val numberDistanceToScroller: Dp = 50.dp,
+    val numberDistanceToScroller: Dp = 70.dp,
     val numberPosition: NumberPosition = NumberPosition.Left
 )
 
@@ -76,7 +76,7 @@ fun truncateTrailingZeros(x: String): Number {
 fun VerticalNumberScrollerGit(
     style: ScrollerStyle = ScrollerStyle(),
     startNumber: Float = 0f,
-    step: Float = 0.5f,
+    step: Float = 1f,
     min: Float = -10f,
     max: Float = 10f,
     upToIncrement: Boolean = true,

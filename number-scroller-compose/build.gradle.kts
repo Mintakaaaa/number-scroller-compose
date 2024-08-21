@@ -42,8 +42,6 @@ android {
 dependencies {
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.material3.android)
-    implementation(libs.androidx.monitor)
-    testImplementation(libs.testng)
 }
 
 afterEvaluate {
