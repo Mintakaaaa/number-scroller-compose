@@ -2,11 +2,13 @@ package com.mintakaaaa.number_scroller
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
@@ -34,13 +36,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // NOTE: bar scroller where the line is a bar that goes with the number (always sticky)
-// NOTE: horizontal scroller (sticky too or not)
 // NOTE: detached number scroller for scrolling the number of different elements
-// NOTE: increment by floats
 
 data class ScrollerStyle(
     val scrollerHeight: Dp = 60.dp,
-    val scrollerWidth: Dp = 30.dp,
+    val scrollerWidth: Dp = 40.dp,
     val scrollerColor: Color = Color.DarkGray,
     val lineColor: Color = Color.Gray,
     val numberColor: Color = Color.Black,
@@ -49,8 +49,9 @@ data class ScrollerStyle(
     val lineThickness: Dp = 4.dp,
     val lineWidthFactor: Float = 0.8f,
     val numberFontSize: TextUnit = 30.sp,
-    val numberDistanceToScroller: Dp = 70.dp,
-    val numberPosition: NumberPosition = NumberPosition.Left
+    val numberDistanceToScroller: Dp = 30.dp,
+    val numberPosition: NumberPosition = NumberPosition.Left,
+    val scrollerDirection: ScrollerDirection = ScrollerDirection.Vertical.Up,
 )
 
 sealed class NumberPosition {
@@ -60,34 +61,33 @@ sealed class NumberPosition {
     data object Bottom: NumberPosition()
 }
 
-fun getDecimalPlaces(value: Float): Int {
-    val valueString = value.toString()
-    return if (valueString.contains('.')) {
-        valueString.substringAfter('.').length
-    } else 0
-}
-
-fun truncateTrailingZeros(x: String): Number {
-    val result = x.toBigDecimal().stripTrailingZeros()
-    return if (result.scale() <= 0) result.toInt() else result.toFloat()
+sealed class ScrollerDirection {
+    sealed class Horizontal : ScrollerDirection() {
+        data object Left : Horizontal()
+        data object Right : Horizontal()
+    }
+    sealed class Vertical : ScrollerDirection() {
+        data object Up : Vertical()
+        data object Down : Vertical()
+    }
 }
 
 @Composable
-fun VerticalNumberScrollerGit(
+fun NumberScrollerGit(
     style: ScrollerStyle = ScrollerStyle(),
     startNumber: Float = 0f,
     step: Float = 1f,
     min: Float = -10f,
     max: Float = 10f,
-    upToIncrement: Boolean = true,
-    scrollDistanceFactor: Float = 100f, // how much drag is needed to increment/decrement scroller
-    lineSpeed: Float = 1f,
+    scrollDistanceFactor: Float = 100f,
+    lineSpeed: Float = 1.5f,
     syncLinePosWithNumber: Boolean = true,
     onDragEnd: (Float) -> Unit = {})
 {
 
     // CRUCIAL: Convert dp to px for accurate positioning
     val scrollerHeightPx = with(LocalDensity.current) { style.scrollerHeight.toPx() }
+    val scrollerWidthPx = with(LocalDensity.current) { style.scrollerWidth.toPx() }
 
     var number by remember { mutableFloatStateOf(startNumber) }
     var totalDrag by remember { mutableFloatStateOf(0f) }
@@ -95,41 +95,111 @@ fun VerticalNumberScrollerGit(
 
     fun repositionLine(currentNumber: Float, dragAmount: Float) {
         if (syncLinePosWithNumber) {
-            val normalizedValue = (currentNumber - min).toFloat() / (max - min)
-            val offset = (normalizedValue * scrollerHeightPx - scrollerHeightPx / 2)
-            lineOffset.floatValue = if (upToIncrement) -offset else offset
-        } else {
-            lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (lineSpeed / 8)))
-                .coerceIn(-scrollerHeightPx / 2, scrollerHeightPx / 2)
+
+            val offset: Float
+            val normalizedValue = (currentNumber - min) / (max - min)
+
+            when (style.scrollerDirection) {
+                is ScrollerDirection.Horizontal -> {
+                    offset = (normalizedValue * scrollerWidthPx - scrollerWidthPx / 2)
+                    when (style.scrollerDirection) {
+                        ScrollerDirection.Horizontal.Left -> {
+                            lineOffset.floatValue = -offset
+                        }
+                        ScrollerDirection.Horizontal.Right -> {
+                            lineOffset.floatValue = offset
+                        }
+                    }
+                }
+
+                is ScrollerDirection.Vertical -> {
+                    offset = (normalizedValue * scrollerHeightPx - scrollerHeightPx / 2)
+                    when (style.scrollerDirection) {
+                        ScrollerDirection.Vertical.Up -> {
+                            lineOffset.floatValue = -offset
+                        }
+                        ScrollerDirection.Vertical.Down -> {
+                            lineOffset.floatValue = offset
+                        }
+                    }
+                }
+            }
+        }
+        else { // when not syncing scroller line with number
+            when (style.scrollerDirection) {
+                is ScrollerDirection.Horizontal -> { // keep line inside scroller width
+                    lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (lineSpeed / 8)))
+                        .coerceIn(-scrollerWidthPx / 2, scrollerWidthPx / 2)
+                }
+
+                is ScrollerDirection.Vertical -> { // keep line inside scroller height
+                    lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (lineSpeed / 8)))
+                        .coerceIn(-scrollerHeightPx / 2, scrollerHeightPx / 2)
+                }
+            }
         }
     }
 
-    // Run updateLineOffset on initialization
-    LaunchedEffect(startNumber) {
+    LaunchedEffect(startNumber) { // reposition line on init
         repositionLine(startNumber, 0f)
     }
 
     val updateNumber: (Float) -> Unit = { dragAmount ->
         totalDrag += dragAmount // calculate total drag distance
+        println(totalDrag)
 
         repositionLine(number, dragAmount)
 
         // get direction of drag and update scroller number accordingly
         when {
-            totalDrag <= -scrollDistanceFactor -> { // scrolling up
-                number = if (upToIncrement) {
-                    (number + step).coerceAtMost(max) // decrement without exceeding min
-                } else {
-                    (number - step).coerceAtLeast(min) // decrement without exceeding min
+            totalDrag <= -scrollDistanceFactor -> { // scrolling up/left
+                when (style.scrollerDirection) {
+                    is ScrollerDirection.Vertical -> {
+                        when (style.scrollerDirection) {
+                            is ScrollerDirection.Vertical.Up -> {
+                                number = (number + step).coerceAtMost(max) // increment without exceeding min
+                            }
+                            is ScrollerDirection.Vertical.Down -> {
+                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
+                            }
+                        }
+                    }
+                    is ScrollerDirection.Horizontal -> {
+                        when (style.scrollerDirection) {
+                            is ScrollerDirection.Horizontal.Right -> {
+                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
+                            }
+                            is ScrollerDirection.Horizontal.Left -> {
+                                number = (number + step).coerceAtMost(max) // increment without exceeding min
+                            }
+                        }
+                    }
                 }
                 totalDrag = 0f
             }
 
-            totalDrag >= scrollDistanceFactor -> { // scrolling down
-                number = if (upToIncrement) {
-                    (number - step).coerceAtLeast(min) // decrement without exceeding min
-                } else {
-                    (number + step).coerceAtMost(max) // increment without exceeding max
+            totalDrag >= scrollDistanceFactor -> { // scrolling down/right
+                when (style.scrollerDirection) { // is set to top (increment by scroll up)
+                    is ScrollerDirection.Vertical -> {
+                        when (style.scrollerDirection) {
+                            is ScrollerDirection.Vertical.Up -> {
+                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
+                            }
+                            is ScrollerDirection.Vertical.Down -> {
+                                number = (number + step).coerceAtMost(max) // increment without exceeding min
+                            }
+                        }
+                    }
+                    is ScrollerDirection.Horizontal -> {
+                        when (style.scrollerDirection) {
+                            is ScrollerDirection.Horizontal.Right -> {
+                                number = (number + step).coerceAtMost(max) // increment without exceeding min
+                            }
+                            is ScrollerDirection.Horizontal.Left -> {
+                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
+                            }
+                        }
+                    }
                 }
                 totalDrag = 0f
             }
@@ -143,11 +213,13 @@ fun VerticalNumberScrollerGit(
                 horizontalArrangement = if (style.numberPosition is NumberPosition.Left) Arrangement.Start else Arrangement.End
             ) {
                 if (style.numberPosition is NumberPosition.Left) {
-                    NumberText(style, step, number, style.numberPosition)
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, onDragEnd, updateNumber)
+                    NumberText(style, step, number)
+                    Spacer(Modifier.width(style.numberDistanceToScroller))
+                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
                 } else {
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, onDragEnd, updateNumber)
-                    NumberText(style, step, number, style.numberPosition)
+                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
+                    Spacer(Modifier.width(style.numberDistanceToScroller))
+                    NumberText(style, step, number)
                 }
             }
         }
@@ -158,11 +230,13 @@ fun VerticalNumberScrollerGit(
                 verticalArrangement = if (style.numberPosition is NumberPosition.Top) Arrangement.Top else Arrangement.Bottom
             ) {
                 if (style.numberPosition is NumberPosition.Top) { // place text to top/bottom of scroller
-                    NumberText(style, step, number, style.numberPosition)
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, onDragEnd, updateNumber)
+                    NumberText(style, step, number)
+                    Spacer(Modifier.height(style.numberDistanceToScroller))
+                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
                 } else {
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, onDragEnd, updateNumber)
-                    NumberText(style, step, number, style.numberPosition)
+                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
+                    Spacer(Modifier.height(style.numberDistanceToScroller))
+                    NumberText(style, step, number)
                 }
             }
         }
@@ -171,13 +245,8 @@ fun VerticalNumberScrollerGit(
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun NumberText(style: ScrollerStyle, step: Float, number: Float, position: NumberPosition) {
+fun NumberText(style: ScrollerStyle, step: Float, number: Float) {
     val formattedNumber = String.format("%.${getDecimalPlaces(step)}f", number)
-
-    val modifier = when (position) { // distance to scroller based on position of number
-        is NumberPosition.Left, is NumberPosition.Right -> Modifier.width(style.numberDistanceToScroller)
-        is NumberPosition.Top, is NumberPosition.Bottom -> Modifier.height(style.numberDistanceToScroller)
-    }
 
     Text(
         text = "${truncateTrailingZeros(formattedNumber)}",
@@ -185,7 +254,6 @@ fun NumberText(style: ScrollerStyle, step: Float, number: Float, position: Numbe
         fontWeight = FontWeight.Bold,
         color = style.numberColor,
         textAlign = TextAlign.Center,
-        modifier = modifier
     )
 }
 
@@ -195,6 +263,7 @@ fun ScrollerBox(
     number: Float,
     lineOffset: MutableState<Float>,
     syncLinePosWithNumber: Boolean,
+    scrollerDirection: ScrollerDirection,
     onDragEnd: (Float) -> Unit,
     updateNumber: (Float) -> Unit
 ) {
@@ -205,24 +274,63 @@ fun ScrollerBox(
             .clip(style.scrollerRounding)
             .background(style.scrollerColor)
             .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragEnd = {
-                        if (!syncLinePosWithNumber) lineOffset.value = 0f
-                        onDragEnd(number)
+                when (scrollerDirection) {
+                    is ScrollerDirection.Horizontal -> {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                if (!syncLinePosWithNumber) lineOffset.value = 0f
+                                onDragEnd(number)
+                            }
+                        ) { _, dragAmount ->
+                            updateNumber(dragAmount)
+                        }
                     }
-                ) { _, dragAmount ->
-                    updateNumber(dragAmount)
+                    is ScrollerDirection.Vertical -> {
+                        detectVerticalDragGestures(
+                            onDragEnd = {
+                                if (!syncLinePosWithNumber) lineOffset.value = 0f
+                                onDragEnd(number)
+                            }
+                        ) { _, dragAmount ->
+                            updateNumber(dragAmount)
+                        }
+                    }
                 }
             }
     ) {
         Box( // Scroller Line
             modifier = Modifier
-                .width(style.scrollerWidth * style.lineWidthFactor)
-                .height(style.lineThickness)
+                .then(
+                    when (scrollerDirection) {
+                        is ScrollerDirection.Horizontal -> {
+                            Modifier
+                                .width(style.lineThickness)
+                                .height(style.scrollerWidth * style.lineWidthFactor)
+                                .offset { IntOffset(lineOffset.value.toInt(), 0) }
+                        }
+                        is ScrollerDirection.Vertical -> {
+                            Modifier
+                                .width(style.scrollerWidth * style.lineWidthFactor)
+                                .height(style.lineThickness)
+                                .offset { IntOffset(0, lineOffset.value.toInt()) }
+                        }
+                    }
+                )
                 .align(Alignment.Center)
-                .offset { IntOffset(0, lineOffset.value.toInt()) }
                 .clip(style.lineRounding)
                 .background(style.lineColor)
         )
     }
+}
+
+fun getDecimalPlaces(value: Float): Int {
+    val valueString = value.toString()
+    return if (valueString.contains('.')) {
+        valueString.substringAfter('.').length
+    } else 0
+}
+
+fun truncateTrailingZeros(x: String): Number {
+    val result = x.toBigDecimal().stripTrailingZeros()
+    return if (result.scale() <= 0) result.toInt() else result.toFloat()
 }
