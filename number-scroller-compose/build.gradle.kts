@@ -29,7 +29,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
@@ -53,7 +53,7 @@ afterEvaluate {
 
                 groupId = "com.github.mintakaaaa"
                 artifactId = "number-scroller-compose"
-                version = "1.5"
+                version = "1.6"
             }
         }
     }
