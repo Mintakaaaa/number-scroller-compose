@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mintakaaaa.number_scroller.NumberPosition
-import com.mintakaaaa.number_scroller.NumberScrollerGit
+import com.mintakaaaa.number_scroller.NumberScroller
 import com.mintakaaaa.number_scroller.ScrollerDirection
 import com.mintakaaaa.number_scroller.ScrollerStyle
 
@@ -75,13 +75,13 @@ class MainActivity : ComponentActivity() {
 
                     Spacer(Modifier.weight(1f))
 
-                    NumberScrollerGit()
+                    NumberScroller()
                 }
                 Spacer(Modifier.weight(1f))
 
                 Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp)) {
 
-                    NumberScrollerGit(
+                    NumberScroller(
                         style = customStyleVertical,
                         step = 2f,
                         lineSpeed = 2.4f,
@@ -104,7 +104,7 @@ class MainActivity : ComponentActivity() {
 
                     }
                     Spacer(Modifier.weight(1f))
-                    NumberScrollerGit(
+                    NumberScroller(
                         style = customStyleHorizontal,
                         step = 2f,
                         lineSpeed = 2.4f,

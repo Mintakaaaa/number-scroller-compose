@@ -73,7 +73,7 @@ sealed class ScrollerDirection {
 }
 
 @Composable
-fun NumberScrollerGit(
+fun NumberScroller(
     style: ScrollerStyle = ScrollerStyle(),
     startNumber: Float = 0f,
     step: Float = 1f,
