@@ -53,7 +53,7 @@ afterEvaluate {
 
                 groupId = "com.github.mintakaaaa"
                 artifactId = "number-scroller-compose"
-                version = "1.7"
+                version = "1.8"
             }
         }
     }
