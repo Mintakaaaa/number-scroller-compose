@@ -1,4 +1,15 @@
-jdk:
-  - openjdk11
+branches:
+  only:
+    - main
+
 before_install:
-  - ./scripts/prepareJitpackEnvironment.sh
+  - echo "Preparing environment"
+
+install:
+  - ./gradlew dependencies  # installing dependencies
+
+script:
+  - ./gradlew build  # building project
+
+after_success:
+  - echo "Build successful"
