@@ -25,8 +25,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
         jvmTarget = "17"
@@ -53,7 +53,7 @@ afterEvaluate {
 
                 groupId = "com.github.mintakaaaa"
                 artifactId = "number-scroller-compose"
-                version = "1.4"
+                version = "1.5"
             }
         }
     }
