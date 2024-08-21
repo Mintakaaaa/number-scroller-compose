@@ -45,17 +45,16 @@ dependencies {
     implementation(kotlin("script-runtime"))
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                from(components["release"])
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = "com.github.mintakaaaa"
+            artifactId = "number-scroller-compose"
+            version = "1.91"
 
-                groupId = "com.github.mintakaaaa"
-                artifactId = "number-scroller-compose"
-                version = "1.8"
+            afterEvaluate {
+                from(components["release"])
             }
         }
     }
 }
-
