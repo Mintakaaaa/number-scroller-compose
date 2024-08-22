@@ -25,7 +25,7 @@ dependencyResolutionManagement {
 2. Add the dependency
 ```
 dependencies {
-  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.0'
+  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.0.0'
 }
 ```
 ## Maven
@@ -43,7 +43,7 @@ dependencies {
 <dependency>
   <groupId>com.github.Mintakaaaa</groupId>
   <artifactId>number-scroller-compose</artifactId>
-  <version>1.0</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 ## Sbt
@@ -55,7 +55,7 @@ resolvers += "jitpack" at "https://jitpack.io"
 ```
 2. Add the dependency
 ```
-libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.0"	
+libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.0.0"	
 ```
 ## Leiningen
 1. Add the JitPack repository to your build file
@@ -66,7 +66,7 @@ libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.
 ```
 2. Add the dependency
 ```
-:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.0"]]
+:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.0.0"]]
 ```
 
 # Using Number Scroller
