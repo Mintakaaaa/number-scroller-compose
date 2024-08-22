@@ -113,10 +113,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                Text(text = "- Scroller directions [Vertical Up/Down, Horizontal Left/Right]", fontSize = 16.sp)
-                Text(text = "- Adjustable number range & step size", fontSize = 16.sp)
-                Text(text = "- Adjustable line speed & drag distance for number change", fontSize = 16.sp)
-                Text(text = "- Scroller number positions [Top, Bottom, Left, Right]", fontSize = 16.sp)
             }
         }
     }
