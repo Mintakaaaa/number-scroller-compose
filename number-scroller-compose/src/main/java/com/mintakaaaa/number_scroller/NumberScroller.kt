@@ -35,9 +35,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// NOTE: bar scroller where the line is a bar that goes with the number (always sticky)
-// NOTE: detached number scroller for scrolling the number of different elements
-
 data class ScrollerStyle(
     val scrollerHeight: Dp = 60.dp,
     val scrollerWidth: Dp = 40.dp,
@@ -146,7 +143,6 @@ fun NumberScroller(
 
     val updateNumber: (Float) -> Unit = { dragAmount ->
         totalDrag += dragAmount // calculate total drag distance
-        println(totalDrag)
 
         repositionLine(number, dragAmount)
 
@@ -215,9 +211,9 @@ fun NumberScroller(
                 if (style.numberPosition is NumberPosition.Left) {
                     NumberText(style, step, number)
                     Spacer(Modifier.width(style.numberDistanceToScroller))
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
+                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
                 } else {
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
+                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
                     Spacer(Modifier.width(style.numberDistanceToScroller))
                     NumberText(style, step, number)
                 }
@@ -232,9 +228,9 @@ fun NumberScroller(
                 if (style.numberPosition is NumberPosition.Top) { // place text to top/bottom of scroller
                     NumberText(style, step, number)
                     Spacer(Modifier.height(style.numberDistanceToScroller))
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
+                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
                 } else {
-                    ScrollerBox(style, number, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd, updateNumber)
+                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
                     Spacer(Modifier.height(style.numberDistanceToScroller))
                     NumberText(style, step, number)
                 }
@@ -260,11 +256,10 @@ fun NumberText(style: ScrollerStyle, step: Float, number: Float) {
 @Composable
 fun ScrollerBox(
     style: ScrollerStyle,
-    number: Float,
     lineOffset: MutableState<Float>,
     syncLinePosWithNumber: Boolean,
     scrollerDirection: ScrollerDirection,
-    onDragEnd: (Float) -> Unit,
+    onDragEnd: () -> Unit,
     updateNumber: (Float) -> Unit
 ) {
     Box(
@@ -279,21 +274,17 @@ fun ScrollerBox(
                         detectHorizontalDragGestures(
                             onDragEnd = {
                                 if (!syncLinePosWithNumber) lineOffset.value = 0f
-                                onDragEnd(number)
+                                onDragEnd()
                             }
-                        ) { _, dragAmount ->
-                            updateNumber(dragAmount)
-                        }
+                        ) { _, dragAmount -> updateNumber(dragAmount) }
                     }
                     is ScrollerDirection.Vertical -> {
                         detectVerticalDragGestures(
                             onDragEnd = {
                                 if (!syncLinePosWithNumber) lineOffset.value = 0f
-                                onDragEnd(number)
+                                onDragEnd()
                             }
-                        ) { _, dragAmount ->
-                            updateNumber(dragAmount)
-                        }
+                        ) { _, dragAmount -> updateNumber(dragAmount) }
                     }
                 }
             }
