@@ -57,7 +57,7 @@ resolvers += "jitpack" at "https://jitpack.io"
 ```
 libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.0"	
 ```
-## leiningen
+## Leiningen
 1. Add the JitPack repository to your build file
    
    Add it in your project.clj at the end of repositories:
@@ -67,4 +67,14 @@ libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.
 2. Add the dependency
 ```
 :dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.0"]]
+```
+
+# Using Number Scroller
+
+
+**Vertical number scroller** 
+
+```
+
+
 ```
