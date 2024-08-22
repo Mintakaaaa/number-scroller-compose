@@ -50,7 +50,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "com.github.mintakaaaa"
             artifactId = "number-scroller-compose"
-            version = "1.0"
+            version = "1.0.1"
 
             afterEvaluate {
                 from(components["release"])
