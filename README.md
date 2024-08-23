@@ -8,6 +8,8 @@ This package contains a customisable composable function for Android Jetpack Com
 
 # Demo
 
+
+
 # Installation
 ## Gradle
 1. Add the JitPack repository to your build file
@@ -69,7 +71,7 @@ libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.
 :dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.0.0"]]
 ```
 
-# Using Number Scroller
+# Using The Number Scroller
 
 
 **Vertical number scroller** 
