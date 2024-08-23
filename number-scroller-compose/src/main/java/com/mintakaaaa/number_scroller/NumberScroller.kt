@@ -35,6 +35,23 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * Data class representing the styling options for the [NumberScroller] component.
+ *
+ * @property scrollerHeight The height of the scroller, in density-independent pixels (dp). Default is 60.dp.
+ * @property scrollerWidth The width of the scroller, in density-independent pixels (dp). Default is 40.dp.
+ * @property scrollerColor The background color of the scroller. Default is Color.DarkGray.
+ * @property lineColor The color of the scroller line. Default is Color.Gray.
+ * @property numberColor The color of the number text. Default is Color.Black.
+ * @property scrollerRounding The shape of the corners of the scroller. Default is a RoundedCornerShape with a 6.dp radius.
+ * @property lineRounding The shape of the corners of the scroller line. Default is a RoundedCornerShape with a 4.dp radius.
+ * @property lineThickness The thickness of the scroller line, in density-independent pixels (dp). Default is 4.dp.
+ * @property lineWidthFactor The proportion of the scroller width that the line occupies. Default is 0.8f.
+ * @property numberFontSize The font size of the number text. Default is 30.sp.
+ * @property numberDistanceToScroller The distance between the number text and the scroller, in density-independent pixels (dp). Default is 30.dp.
+ * @property numberPosition The position of the number relative to the scroller. Default is [NumberPosition.Left].
+ * @property scrollerDirection The direction in which the scroller operates. Default is [ScrollerDirection.VerticalUp].
+ */
 data class ScrollerStyle(
     val scrollerHeight: Dp = 60.dp,
     val scrollerWidth: Dp = 40.dp,
@@ -51,14 +68,35 @@ data class ScrollerStyle(
     val scrollerDirection: ScrollerDirection = ScrollerDirection.VerticalUp,
 )
 
+/**
+ * Enum representing the possible positions of the number relative to the scroller.
+ */
 enum class NumberPosition {
-    Top, Bottom, Left, Right
+    Above, Below, Left, Right
 }
 
+/**
+ * Enum representing the possible directions in which the scroller can operate.
+ */
 enum class ScrollerDirection {
     VerticalUp, VerticalDown, HorizontalLeft, HorizontalRight
 }
 
+/**
+ * Composable function that displays a number scroller UI component.
+ *
+ * The [NumberScroller] allows users to scroll a number up/down/left/right based on drag gestures.
+ *
+ * @param style The styling options for the scroller. Default is [ScrollerStyle].
+ * @param startNumber The initial value of the number displayed by the scroller. Default is 0f.
+ * @param step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
+ * @param min The minimum value that the number can be set to. Default is -10f.
+ * @param max The maximum value that the number can be set to. Default is 10f.
+ * @param scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
+ * @param lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
+ * @param syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
+ * @param onDragEnd Callback function to be called when the drag operation ends, with the current number as the parameter.
+ */
 @Composable
 fun NumberScroller(
     style: ScrollerStyle = ScrollerStyle(),
@@ -85,9 +123,9 @@ fun NumberScroller(
 
             val normalizedValue = (currentNumber - min) / (max - min)
             val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
-                scrollerWidthPx
+                scrollerWidthPx // confine scroller line within scroller WIDTH
             } else {
-                scrollerHeightPx
+                scrollerHeightPx // confine scroller line within scroller HEIGHT
             }
 
             val offset = (normalizedValue * dimensionPx - dimensionPx / 2)
@@ -114,7 +152,6 @@ fun NumberScroller(
     }
 
     val updateNumber: (Float) -> Unit = { dragAmount ->
-        println("Update number")
         totalDrag += dragAmount // calculate total drag distance
 
         repositionLine(number, dragAmount)
@@ -163,12 +200,12 @@ fun NumberScroller(
             }
         }
 
-        NumberPosition.Top, NumberPosition.Bottom -> {
+        NumberPosition.Above, NumberPosition.Below -> {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = if (style.numberPosition == NumberPosition.Top) Arrangement.Top else Arrangement.Bottom
+                verticalArrangement = if (style.numberPosition == NumberPosition.Above) Arrangement.Top else Arrangement.Bottom
             ) {
-                if (style.numberPosition == NumberPosition.Top) { // place text to top/bottom of scroller
+                if (style.numberPosition == NumberPosition.Above) { // place text to top/below of scroller
                     NumberText(style, step, number)
                     Spacer(Modifier.height(style.numberDistanceToScroller))
                     ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
@@ -182,6 +219,13 @@ fun NumberScroller(
     }
 }
 
+/**
+ * Composable function that displays the number text with styling.
+ *
+ * @param style The styling options for the number text.
+ * @param step The step value for formatting the number.
+ * @param number The current number to be displayed.
+ */
 @SuppressLint("DefaultLocale")
 @Composable
 fun NumberText(style: ScrollerStyle, step: Float, number: Float) {
@@ -196,6 +240,16 @@ fun NumberText(style: ScrollerStyle, step: Float, number: Float) {
     )
 }
 
+/**
+ * Composable function that displays the scroller box with a draggable line.
+ *
+ * @param style The styling options for the scroller box.
+ * @param lineOffset The current offset of the scroller line.
+ * @param syncLinePosWithNumber Whether to synchronize the position of the line with the number value.
+ * @param scrollerDirection The direction in which the scroller operates.
+ * @param onDragEnd Callback function to be called when the drag operation ends.
+ * @param updateNumber Function to update the number based on drag amount.
+ */
 @Composable
 fun ScrollerBox(
     style: ScrollerStyle,
@@ -259,6 +313,12 @@ fun ScrollerBox(
     }
 }
 
+/**
+ * Gets the number of decimal places in a float value based on the step size.
+ *
+ * @param value The float value for which to get the number of decimal places.
+ * @return The number of decimal places in the value.
+ */
 fun getDecimalPlaces(value: Float): Int {
     val valueString = value.toString()
     return if (valueString.contains('.')) {
@@ -266,6 +326,12 @@ fun getDecimalPlaces(value: Float): Int {
     } else 0
 }
 
+/**
+ * Truncates trailing zeros from a string representation of a number.
+ *
+ * @param x The string representation of the number.
+ * @return The number with trailing zeros removed.
+ */
 fun truncateTrailingZeros(x: String): Number {
     val result = x.toBigDecimal().stripTrailingZeros()
     return if (result.scale() <= 0) result.toInt() else result.toFloat()

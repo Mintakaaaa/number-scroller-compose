@@ -95,7 +95,7 @@ fun VerticalScrollerUp() {
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        numberPosition = NumberPosition.Top,
+        numberPosition = NumberPosition.Above,
         lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
         lineWidthFactor = 0.5f,
         lineThickness = 8.dp,
@@ -166,7 +166,7 @@ fun HorizontalScrollerRight() {
     */
     var text by remember { mutableStateOf("Scroll me!") }
 
-    Text(text, style = TextStyle(fontSize = 40.sp))
+    Text(text, style = TextStyle(fontSize = 40.sp), modifier = Modifier.padding(bottom = 20.dp))
 
     val updateText: (Float) -> Unit = { numberSelected ->
         text = "Scrolled to: $numberSelected"
@@ -193,7 +193,7 @@ fun HorizontalScrollerRight() {
         numberFontSize = 30.sp,
         numberDistanceToScroller = 0.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        numberPosition = NumberPosition.Bottom,
+        numberPosition = NumberPosition.Below,
         lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
         lineWidthFactor = 0.3f,
         lineThickness = 8.dp,
