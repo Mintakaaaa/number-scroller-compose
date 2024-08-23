@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -69,6 +70,25 @@ data class ScrollerStyle(
 )
 
 /**
+ *  * Data class representing the behaviour options for the [NumberScroller] component.
+ *
+ * @param startNumber The initial value of the number displayed by the scroller. Default is 0f.
+ * @param step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
+ * @param range The range of values that the number can be set to. Default is -10f to 10f.
+ * @param scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
+ * @param lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
+ * @param syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
+**/
+data class ScrollerBehaviour(
+    val startNumber: Float = 0f,
+    val step: Float = 1f,
+    val range: ClosedFloatingPointRange<Float> = -10f..10f,
+    val scrollDistanceFactor: Float = 100f,
+    val lineSpeed: Float = 1.5f,
+    val syncLinePosWithNumber: Boolean = true,
+)
+
+/**
  * Enum representing the possible positions of the number relative to the scroller.
  */
 enum class NumberPosition {
@@ -88,25 +108,13 @@ enum class ScrollerDirection {
  * The [NumberScroller] allows users to scroll a number up/down/left/right based on drag gestures.
  *
  * @param style The styling options for the scroller. Default is [ScrollerStyle].
- * @param startNumber The initial value of the number displayed by the scroller. Default is 0f.
- * @param step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
- * @param min The minimum value that the number can be set to. Default is -10f.
- * @param max The maximum value that the number can be set to. Default is 10f.
- * @param scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
- * @param lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
- * @param syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
+ * @param behaviour The behaviour options for the scroller. Default is [ScrollerBehaviour].
  * @param onDragEnd Callback function to be called when the drag operation ends, with the current number as the parameter.
  */
 @Composable
 fun NumberScroller(
     style: ScrollerStyle = ScrollerStyle(),
-    startNumber: Float = 0f,
-    step: Float = 1f,
-    min: Float = -10f,
-    max: Float = 10f,
-    scrollDistanceFactor: Float = 100f,
-    lineSpeed: Float = 1.5f,
-    syncLinePosWithNumber: Boolean = true,
+    behaviour: ScrollerBehaviour = ScrollerBehaviour(),
     onDragEnd: (Float) -> Unit = {})
 {
 
@@ -114,71 +122,56 @@ fun NumberScroller(
     val scrollerHeightPx = with(LocalDensity.current) { style.scrollerHeight.toPx() }
     val scrollerWidthPx = with(LocalDensity.current) { style.scrollerWidth.toPx() }
 
-    var number by remember { mutableFloatStateOf(startNumber) }
-    var totalDrag by remember { mutableFloatStateOf(0f) }
+    var number by remember { mutableFloatStateOf(behaviour.startNumber) }
+    val totalDrag = remember { mutableFloatStateOf(0f) }
     val lineOffset = remember { mutableFloatStateOf(0f) }
 
-    fun repositionLine(currentNumber: Float, dragAmount: Float) {
-        if (syncLinePosWithNumber) {
-
-            val normalizedValue = (currentNumber - min) / (max - min)
-            val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
-                scrollerWidthPx // confine scroller line within scroller WIDTH
-            } else {
-                scrollerHeightPx // confine scroller line within scroller HEIGHT
-            }
-
-            val offset = (normalizedValue * dimensionPx - dimensionPx / 2)
-
-            lineOffset.floatValue = when (style.scrollerDirection) {
-                ScrollerDirection.HorizontalLeft, ScrollerDirection.VerticalUp -> -offset
-                ScrollerDirection.HorizontalRight, ScrollerDirection.VerticalDown -> offset
-            }
+    val repositionLineByNumber: () -> Unit = {
+        val normalizedValue = (number - behaviour.range.start) / (behaviour.range.endInclusive - behaviour.range.start)
+        val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+            scrollerWidthPx // confine scroller line within scroller WIDTH
+        } else {
+            scrollerHeightPx // confine scroller line within scroller HEIGHT
         }
-        else { // when not syncing scroller line with number
-            val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
-                scrollerWidthPx // confine scroller line within scroller WIDTH
-            } else {
-                scrollerHeightPx // confine scroller line within scroller HEIGHT
-            }
 
-            lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (lineSpeed / 8)))
-                .coerceIn(-dimensionPx / 2, dimensionPx / 2) // confine line within dimension selected
+        val offset = (normalizedValue * dimensionPx - dimensionPx / 2)
+        lineOffset.floatValue = when (style.scrollerDirection) {
+            ScrollerDirection.HorizontalLeft, ScrollerDirection.VerticalUp -> -offset
+            ScrollerDirection.HorizontalRight, ScrollerDirection.VerticalDown -> offset
         }
     }
 
-    LaunchedEffect(startNumber) { // reposition line on init
-        repositionLine(startNumber, 0f)
+    val repositionLineByDrag: (Float) -> Unit = { dragAmount ->
+        val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+            scrollerWidthPx // confine scroller line within scroller WIDTH
+        } else {
+            scrollerHeightPx // confine scroller line within scroller HEIGHT
+        }
+
+        lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (behaviour.lineSpeed / 8)))
+            .coerceIn(-dimensionPx / 2, dimensionPx / 2) // confine line within dimension selected
     }
 
-    val updateNumber: (Float) -> Unit = { dragAmount ->
-        totalDrag += dragAmount // calculate total drag distance
+    if (behaviour.syncLinePosWithNumber) repositionLineByNumber()
+    else repositionLineByDrag(0f)
 
-        repositionLine(number, dragAmount)
-
-        // checking if total drag exceeds scroll distance factor to trigger number change
-        if (totalDrag <= -scrollDistanceFactor || totalDrag >= scrollDistanceFactor) {
-            number = when (style.scrollerDirection) {
-                ScrollerDirection.VerticalUp, ScrollerDirection.HorizontalLeft -> {
-                    if (totalDrag <= -scrollDistanceFactor) { // dragging up/left past threshold
-                        (number + step).coerceAtMost(max)
-                    } else { // dragging down/right past threshold
-                        (number - step).coerceAtLeast(min)
-                    }
-                }
-
-                ScrollerDirection.VerticalDown, ScrollerDirection.HorizontalRight -> {
-                    if (totalDrag <= -scrollDistanceFactor) { // dragging up/left past threshold
-                        (number - step).coerceAtLeast(min)
-                    } else { // dragging down/right past threshold
-                        (number + step).coerceAtMost(max)
-                    }
+    val updateNumber: () -> Unit = {
+        number = when (style.scrollerDirection) {
+            ScrollerDirection.VerticalUp, ScrollerDirection.HorizontalLeft -> {
+                if (totalDrag.floatValue <= -behaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                    (number + behaviour.step).coerceAtMost(behaviour.range.endInclusive)
+                } else { // dragging down/right past threshold
+                    (number - behaviour.step).coerceAtLeast(behaviour.range.start)
                 }
             }
 
-            // Reset the total drag after adjusting the number.
-            // This prepares for the next drag event to be processed independently.
-            totalDrag = 0f
+            ScrollerDirection.VerticalDown, ScrollerDirection.HorizontalRight -> {
+                if (totalDrag.floatValue <= -behaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                    (number - behaviour.step).coerceAtLeast(behaviour.range.start)
+                } else { // dragging down/right past threshold
+                    (number + behaviour.step).coerceAtMost(behaviour.range.endInclusive)
+                }
+            }
         }
     }
 
@@ -189,13 +182,13 @@ fun NumberScroller(
                 horizontalArrangement = if (style.numberPosition == NumberPosition.Left) Arrangement.Start else Arrangement.End
             ) {
                 if (style.numberPosition == NumberPosition.Left) {
-                    NumberText(style, step, number)
+                    NumberText(style, behaviour.step, number)
                     Spacer(Modifier.width(style.numberDistanceToScroller))
-                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
+                    ScrollerBox(style, behaviour, lineOffset, onDragEnd = { onDragEnd(number) }, updateNumber, repositionLineByDrag, repositionLineByNumber, totalDrag)
                 } else {
-                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
+                    ScrollerBox(style, behaviour, lineOffset, onDragEnd = { onDragEnd(number) }, updateNumber, repositionLineByDrag, repositionLineByNumber, totalDrag)
                     Spacer(Modifier.width(style.numberDistanceToScroller))
-                    NumberText(style, step, number)
+                    NumberText(style, behaviour.step, number)
                 }
             }
         }
@@ -206,13 +199,13 @@ fun NumberScroller(
                 verticalArrangement = if (style.numberPosition == NumberPosition.Above) Arrangement.Top else Arrangement.Bottom
             ) {
                 if (style.numberPosition == NumberPosition.Above) { // place text to top/below of scroller
-                    NumberText(style, step, number)
+                    NumberText(style, behaviour.step, number)
                     Spacer(Modifier.height(style.numberDistanceToScroller))
-                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
+                    ScrollerBox(style, behaviour, lineOffset, onDragEnd = { onDragEnd(number) }, updateNumber, repositionLineByDrag, repositionLineByNumber, totalDrag)
                 } else {
-                    ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
+                    ScrollerBox(style, behaviour, lineOffset, onDragEnd = { onDragEnd(number) }, updateNumber, repositionLineByDrag, repositionLineByNumber, totalDrag)
                     Spacer(Modifier.height(style.numberDistanceToScroller))
-                    NumberText(style, step, number)
+                    NumberText(style, behaviour.step, number)
                 }
             }
         }
@@ -244,20 +237,24 @@ fun NumberText(style: ScrollerStyle, step: Float, number: Float) {
  * Composable function that displays the scroller box with a draggable line.
  *
  * @param style The styling options for the scroller box.
+ * @param behaviour The behaviour options for the scroller box.
  * @param lineOffset The current offset of the scroller line.
- * @param syncLinePosWithNumber Whether to synchronize the position of the line with the number value.
- * @param scrollerDirection The direction in which the scroller operates.
  * @param onDragEnd Callback function to be called when the drag operation ends.
  * @param updateNumber Function to update the number based on drag amount.
+ * @param repositionLineByDrag A function to reposition the scroller line based on drag amount.
+ * @param repositionLineByNumber A function to reposition the scroller line based on the current number value.
+ * @param totalDrag A mutable state that tracks the total drag distance during a drag operation.
  */
 @Composable
 fun ScrollerBox(
     style: ScrollerStyle,
+    behaviour: ScrollerBehaviour,
     lineOffset: MutableState<Float>,
-    syncLinePosWithNumber: Boolean,
-    scrollerDirection: ScrollerDirection,
     onDragEnd: () -> Unit,
-    updateNumber: (Float) -> Unit
+    updateNumber: () -> Unit,
+    repositionLineByDrag: (Float) -> Unit,
+    repositionLineByNumber: () -> Unit,
+    totalDrag: MutableFloatState,
 ) {
     Box(
         modifier = Modifier
@@ -266,23 +263,39 @@ fun ScrollerBox(
             .clip(style.scrollerRounding)
             .background(style.scrollerColor)
             .pointerInput(Unit) {
-                when (scrollerDirection) {
+                when (style.scrollerDirection) {
                     ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
                         detectHorizontalDragGestures(
                             onDragEnd = {
-                                if (!syncLinePosWithNumber) lineOffset.value = 0f
+                                if (!behaviour.syncLinePosWithNumber) lineOffset.value = 0f
                                 onDragEnd()
                             }
-                        ) { _, dragAmount -> updateNumber(dragAmount) }
+                        ) { _, dragAmount ->
+                            totalDrag.floatValue += dragAmount // calculate total drag distance
+                            if (totalDrag.floatValue <= -behaviour.scrollDistanceFactor || totalDrag.floatValue >= behaviour.scrollDistanceFactor) {
+                                updateNumber()
+                                totalDrag.floatValue = 0f
+                            }
+                            if (behaviour.syncLinePosWithNumber) repositionLineByNumber()
+                            else repositionLineByDrag(dragAmount)
+                        }
                     }
 
                     ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
                         detectVerticalDragGestures(
                             onDragEnd = {
-                                if (!syncLinePosWithNumber) lineOffset.value = 0f
+                                if (!behaviour.syncLinePosWithNumber) lineOffset.value = 0f
                                 onDragEnd()
                             }
-                        ) { _, dragAmount -> updateNumber(dragAmount) }
+                        ) { _, dragAmount ->
+                            totalDrag.floatValue += dragAmount // calculate total drag distance
+                            if (totalDrag.floatValue <= -behaviour.scrollDistanceFactor || totalDrag.floatValue >= behaviour.scrollDistanceFactor) {
+                                updateNumber()
+                                totalDrag.floatValue = 0f
+                            }
+                            if (behaviour.syncLinePosWithNumber) repositionLineByNumber()
+                            else repositionLineByDrag(dragAmount)
+                        }
                     }
                 }
             }
@@ -290,7 +303,7 @@ fun ScrollerBox(
         Box( // Scroller Line
             modifier = Modifier
                 .then(
-                    when (scrollerDirection) {
+                    when (style.scrollerDirection) {
                         ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
                             Modifier
                                 .width(style.lineThickness)

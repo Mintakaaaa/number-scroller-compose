@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mintakaaaa.number_scroller.NumberPosition
 import com.mintakaaaa.number_scroller.NumberScroller
+import com.mintakaaaa.number_scroller.ScrollerBehaviour
 import com.mintakaaaa.number_scroller.ScrollerDirection
 import com.mintakaaaa.number_scroller.ScrollerStyle
 
@@ -43,9 +44,9 @@ class MainActivity : ComponentActivity() {
                 // uncomment out the below composables to see number scroller presets:
 
                 DefaultScroller()
-//                VerticalScrollerUp() // scroll up to increment
-//                VerticalScrollerDown() // scroll down to increment
-//                HorizontalScrollerRight() // scroll right to increment
+                VerticalScrollerUp() // scroll up to increment
+                VerticalScrollerDown() // scroll down to increment
+                HorizontalScrollerRight() // scroll right to increment
 
                 // try making a HorizontalScrollerLeft yourself below :]
 
@@ -105,11 +106,12 @@ fun VerticalScrollerUp() {
     Row(modifier = Modifier.fillMaxWidth(0.6f), horizontalArrangement = Arrangement.Start) {
         NumberScroller(
             style = customStyle,
-            step = 2f,
-            startNumber = 56f,
-            min = 50f,
-            max = 150f,
-            scrollDistanceFactor = 25f,
+            behaviour = ScrollerBehaviour(
+                step = 2f,
+                startNumber = 56f,
+                range = 50f..150f,
+                scrollDistanceFactor = 25f,
+            )
         )
     }
 }
@@ -147,13 +149,14 @@ fun VerticalScrollerDown() {
     Row(modifier = Modifier.fillMaxWidth(0.6f), horizontalArrangement = Arrangement.Start) {
         NumberScroller(
             style = customStyle,
-            step = 0.5f,
-            startNumber = 15f,
-            min = -20f,
-            max = 30f,
-            lineSpeed = 0.5f,
-            scrollDistanceFactor = 50f,
-            syncLinePosWithNumber = false,
+            behaviour = ScrollerBehaviour(
+                startNumber = 5f,
+                step = 0.5f,
+                range = -20f..30f,
+                lineSpeed = 0.5f,
+                scrollDistanceFactor = 50f,
+                syncLinePosWithNumber = false,
+            )
         )
     }
 }
@@ -203,10 +206,13 @@ fun HorizontalScrollerRight() {
     Row(modifier = Modifier.fillMaxWidth(0.6f), horizontalArrangement = Arrangement.Center) {
         NumberScroller(
             style = customStyle,
-            step = 2f,
-            lineSpeed = 2.4f,
-            scrollDistanceFactor = 50f,
-            syncLinePosWithNumber = false,
+            behaviour = ScrollerBehaviour(
+                step = 2f,
+                lineSpeed = 2.4f,
+                startNumber = 5f,
+                scrollDistanceFactor = 50f,
+                syncLinePosWithNumber = false
+            ),
             onDragEnd = { numberSelected -> updateText(numberSelected) }
         )
     }
