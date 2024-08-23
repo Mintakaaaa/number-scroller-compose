@@ -8,7 +8,7 @@ This package contains a customisable composable function for Android Jetpack Com
 
 # Demo
 
-
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/demo.gif "Scroller Demo")
 
 # Installation
 ## Gradle
@@ -74,9 +74,42 @@ libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.
 # Using The Number Scroller
 
 
-**Vertical number scroller** 
+**Default number scroller** 
 
+```kotlin
+NumberScroller()
 ```
 
+
+**Fully customised number scroller**
+
+```kotlin
+val customStyle = ScrollerStyle(
+        scrollerWidth = 50.dp,
+        scrollerHeight = 100.dp,
+	scrollerRounding = RoundedCornerShape(20.dp),
+        scrollerDirection = ScrollerDirection.VerticalUp,
+        scrollerColor = MaterialTheme.colorScheme.primaryContainer,
+        lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        numberFontSize = 30.sp,
+        numberDistanceToScroller = 30.dp,
+        numberPosition = NumberPosition.Above,
+        lineWidthFactor = 0.5f,
+        lineThickness = 8.dp,
+        lineRounding = RoundedCornerShape(5.dp)
+)
+val customBehaviour = ScrollerBehaviour(
+	step = 2f,
+	startNumber = 56f,
+	range = 50f..150f,
+	scrollDistanceFactor = 25f,
+	lineSpeed = 2f,
+	syncLinePosWithNumber = false
+)
+NumberScroller(
+	style = customStyle,
+	behaviour = customBehaviour
+)
 
 ```
