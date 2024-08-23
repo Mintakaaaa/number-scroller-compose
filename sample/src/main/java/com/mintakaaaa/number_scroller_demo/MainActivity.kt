@@ -43,9 +43,9 @@ class MainActivity : ComponentActivity() {
                 // uncomment out the below composables to see number scroller presets:
 
                 DefaultScroller()
-//                VerticalScrollerUp()
-//                VerticalScrollerDown()
-//                HorizontalScrollerRight()
+//                VerticalScrollerUp() // scroll up to increment
+//                VerticalScrollerDown() // scroll down to increment
+//                HorizontalScrollerRight() // scroll right to increment
 
                 // try making a HorizontalScrollerLeft yourself below :]
 
@@ -91,7 +91,7 @@ fun VerticalScrollerUp() {
         scrollerHeight = 100.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(20.dp),
-        scrollerDirection = ScrollerDirection.Vertical.Up,
+        scrollerDirection = ScrollerDirection.VerticalUp,
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -133,7 +133,7 @@ fun VerticalScrollerDown() {
         scrollerHeight = 100.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(20.dp),
-        scrollerDirection = ScrollerDirection.Vertical.Down,
+        scrollerDirection = ScrollerDirection.VerticalDown,
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -189,7 +189,7 @@ fun HorizontalScrollerRight() {
         scrollerHeight = 50.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(10.dp),
-        scrollerDirection = ScrollerDirection.Horizontal.Right,
+        scrollerDirection = ScrollerDirection.HorizontalRight,
         numberFontSize = 30.sp,
         numberDistanceToScroller = 0.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,

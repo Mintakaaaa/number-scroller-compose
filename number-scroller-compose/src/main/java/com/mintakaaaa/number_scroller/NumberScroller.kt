@@ -48,25 +48,15 @@ data class ScrollerStyle(
     val numberFontSize: TextUnit = 30.sp,
     val numberDistanceToScroller: Dp = 30.dp,
     val numberPosition: NumberPosition = NumberPosition.Left,
-    val scrollerDirection: ScrollerDirection = ScrollerDirection.Vertical.Up,
+    val scrollerDirection: ScrollerDirection = ScrollerDirection.VerticalUp,
 )
 
-sealed class NumberPosition {
-    data object Left: NumberPosition()
-    data object Top: NumberPosition()
-    data object Right: NumberPosition()
-    data object Bottom: NumberPosition()
+enum class NumberPosition {
+    Top, Bottom, Left, Right
 }
 
-sealed class ScrollerDirection {
-    sealed class Horizontal : ScrollerDirection() {
-        data object Left : Horizontal()
-        data object Right : Horizontal()
-    }
-    sealed class Vertical : ScrollerDirection() {
-        data object Up : Vertical()
-        data object Down : Vertical()
-    }
+enum class ScrollerDirection {
+    VerticalUp, VerticalDown, HorizontalLeft, HorizontalRight
 }
 
 @Composable
@@ -93,47 +83,29 @@ fun NumberScroller(
     fun repositionLine(currentNumber: Float, dragAmount: Float) {
         if (syncLinePosWithNumber) {
 
-            val offset: Float
             val normalizedValue = (currentNumber - min) / (max - min)
+            val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+                scrollerWidthPx
+            } else {
+                scrollerHeightPx
+            }
 
-            when (style.scrollerDirection) {
-                is ScrollerDirection.Horizontal -> {
-                    offset = (normalizedValue * scrollerWidthPx - scrollerWidthPx / 2)
-                    when (style.scrollerDirection) {
-                        ScrollerDirection.Horizontal.Left -> {
-                            lineOffset.floatValue = -offset
-                        }
-                        ScrollerDirection.Horizontal.Right -> {
-                            lineOffset.floatValue = offset
-                        }
-                    }
-                }
+            val offset = (normalizedValue * dimensionPx - dimensionPx / 2)
 
-                is ScrollerDirection.Vertical -> {
-                    offset = (normalizedValue * scrollerHeightPx - scrollerHeightPx / 2)
-                    when (style.scrollerDirection) {
-                        ScrollerDirection.Vertical.Up -> {
-                            lineOffset.floatValue = -offset
-                        }
-                        ScrollerDirection.Vertical.Down -> {
-                            lineOffset.floatValue = offset
-                        }
-                    }
-                }
+            lineOffset.floatValue = when (style.scrollerDirection) {
+                ScrollerDirection.HorizontalLeft, ScrollerDirection.VerticalUp -> -offset
+                ScrollerDirection.HorizontalRight, ScrollerDirection.VerticalDown -> offset
             }
         }
         else { // when not syncing scroller line with number
-            when (style.scrollerDirection) {
-                is ScrollerDirection.Horizontal -> { // keep line inside scroller width
-                    lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (lineSpeed / 8)))
-                        .coerceIn(-scrollerWidthPx / 2, scrollerWidthPx / 2)
-                }
-
-                is ScrollerDirection.Vertical -> { // keep line inside scroller height
-                    lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (lineSpeed / 8)))
-                        .coerceIn(-scrollerHeightPx / 2, scrollerHeightPx / 2)
-                }
+            val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+                scrollerWidthPx // confine scroller line within scroller WIDTH
+            } else {
+                scrollerHeightPx // confine scroller line within scroller HEIGHT
             }
+
+            lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (lineSpeed / 8)))
+                .coerceIn(-dimensionPx / 2, dimensionPx / 2) // confine line within dimension selected
         }
     }
 
@@ -142,73 +114,44 @@ fun NumberScroller(
     }
 
     val updateNumber: (Float) -> Unit = { dragAmount ->
+        println("Update number")
         totalDrag += dragAmount // calculate total drag distance
 
         repositionLine(number, dragAmount)
 
-        // get direction of drag and update scroller number accordingly
-        when {
-            totalDrag <= -scrollDistanceFactor -> { // scrolling up/left
-                when (style.scrollerDirection) {
-                    is ScrollerDirection.Vertical -> {
-                        when (style.scrollerDirection) {
-                            is ScrollerDirection.Vertical.Up -> {
-                                number = (number + step).coerceAtMost(max) // increment without exceeding min
-                            }
-                            is ScrollerDirection.Vertical.Down -> {
-                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
-                            }
-                        }
-                    }
-                    is ScrollerDirection.Horizontal -> {
-                        when (style.scrollerDirection) {
-                            is ScrollerDirection.Horizontal.Right -> {
-                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
-                            }
-                            is ScrollerDirection.Horizontal.Left -> {
-                                number = (number + step).coerceAtMost(max) // increment without exceeding min
-                            }
-                        }
+        // checking if total drag exceeds scroll distance factor to trigger number change
+        if (totalDrag <= -scrollDistanceFactor || totalDrag >= scrollDistanceFactor) {
+            number = when (style.scrollerDirection) {
+                ScrollerDirection.VerticalUp, ScrollerDirection.HorizontalLeft -> {
+                    if (totalDrag <= -scrollDistanceFactor) { // dragging up/left past threshold
+                        (number + step).coerceAtMost(max)
+                    } else { // dragging down/right past threshold
+                        (number - step).coerceAtLeast(min)
                     }
                 }
-                totalDrag = 0f
+
+                ScrollerDirection.VerticalDown, ScrollerDirection.HorizontalRight -> {
+                    if (totalDrag <= -scrollDistanceFactor) { // dragging up/left past threshold
+                        (number - step).coerceAtLeast(min)
+                    } else { // dragging down/right past threshold
+                        (number + step).coerceAtMost(max)
+                    }
+                }
             }
 
-            totalDrag >= scrollDistanceFactor -> { // scrolling down/right
-                when (style.scrollerDirection) { // is set to top (increment by scroll up)
-                    is ScrollerDirection.Vertical -> {
-                        when (style.scrollerDirection) {
-                            is ScrollerDirection.Vertical.Up -> {
-                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
-                            }
-                            is ScrollerDirection.Vertical.Down -> {
-                                number = (number + step).coerceAtMost(max) // increment without exceeding min
-                            }
-                        }
-                    }
-                    is ScrollerDirection.Horizontal -> {
-                        when (style.scrollerDirection) {
-                            is ScrollerDirection.Horizontal.Right -> {
-                                number = (number + step).coerceAtMost(max) // increment without exceeding min
-                            }
-                            is ScrollerDirection.Horizontal.Left -> {
-                                number = (number - step).coerceAtLeast(min) // decrement without exceeding min
-                            }
-                        }
-                    }
-                }
-                totalDrag = 0f
-            }
+            // Reset the total drag after adjusting the number.
+            // This prepares for the next drag event to be processed independently.
+            totalDrag = 0f
         }
     }
 
     when (style.numberPosition) {
-        is NumberPosition.Left, is NumberPosition.Right -> { // place text to left/right of scroller
+        NumberPosition.Left, NumberPosition.Right -> { // place text to left/right of scroller
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = if (style.numberPosition is NumberPosition.Left) Arrangement.Start else Arrangement.End
+                horizontalArrangement = if (style.numberPosition == NumberPosition.Left) Arrangement.Start else Arrangement.End
             ) {
-                if (style.numberPosition is NumberPosition.Left) {
+                if (style.numberPosition == NumberPosition.Left) {
                     NumberText(style, step, number)
                     Spacer(Modifier.width(style.numberDistanceToScroller))
                     ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
@@ -220,12 +163,12 @@ fun NumberScroller(
             }
         }
 
-        is NumberPosition.Top, is NumberPosition.Bottom -> {
+        NumberPosition.Top, NumberPosition.Bottom -> {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = if (style.numberPosition is NumberPosition.Top) Arrangement.Top else Arrangement.Bottom
+                verticalArrangement = if (style.numberPosition == NumberPosition.Top) Arrangement.Top else Arrangement.Bottom
             ) {
-                if (style.numberPosition is NumberPosition.Top) { // place text to top/bottom of scroller
+                if (style.numberPosition == NumberPosition.Top) { // place text to top/bottom of scroller
                     NumberText(style, step, number)
                     Spacer(Modifier.height(style.numberDistanceToScroller))
                     ScrollerBox(style, lineOffset, syncLinePosWithNumber, style.scrollerDirection, onDragEnd = { onDragEnd(number) }, updateNumber)
@@ -270,7 +213,7 @@ fun ScrollerBox(
             .background(style.scrollerColor)
             .pointerInput(Unit) {
                 when (scrollerDirection) {
-                    is ScrollerDirection.Horizontal -> {
+                    ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
                         detectHorizontalDragGestures(
                             onDragEnd = {
                                 if (!syncLinePosWithNumber) lineOffset.value = 0f
@@ -278,7 +221,8 @@ fun ScrollerBox(
                             }
                         ) { _, dragAmount -> updateNumber(dragAmount) }
                     }
-                    is ScrollerDirection.Vertical -> {
+
+                    ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
                         detectVerticalDragGestures(
                             onDragEnd = {
                                 if (!syncLinePosWithNumber) lineOffset.value = 0f
@@ -293,13 +237,14 @@ fun ScrollerBox(
             modifier = Modifier
                 .then(
                     when (scrollerDirection) {
-                        is ScrollerDirection.Horizontal -> {
+                        ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
                             Modifier
                                 .width(style.lineThickness)
                                 .height(style.scrollerWidth * style.lineWidthFactor)
                                 .offset { IntOffset(lineOffset.value.toInt(), 0) }
                         }
-                        is ScrollerDirection.Vertical -> {
+
+                        ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
                             Modifier
                                 .width(style.scrollerWidth * style.lineWidthFactor)
                                 .height(style.lineThickness)
