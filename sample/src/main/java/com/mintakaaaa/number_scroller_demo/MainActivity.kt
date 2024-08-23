@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -40,16 +41,15 @@ class MainActivity : ComponentActivity() {
                     .padding(15.dp),
                 verticalArrangement = Arrangement.Center
             ) {
-
-                // uncomment out the below composables to see number scroller presets:
-
                 DefaultScroller()
-                VerticalScrollerUp() // scroll up to increment
-                VerticalScrollerDown() // scroll down to increment
-                HorizontalScrollerRight() // scroll right to increment
-
-                // try making a HorizontalScrollerLeft yourself below :]
-
+                Spacer(Modifier.weight(1f))
+                One()
+                Spacer(Modifier.weight(1f))
+                Two()
+                Spacer(Modifier.weight(1f))
+                Three()
+                Spacer(Modifier.weight(1f))
+                Four()
             }
         }
     }
@@ -57,36 +57,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun DefaultScroller() {
-    /*
-    * No parameters passed to number scroller
-    * Style = Default (grey) style
-    * Start number = 0
-    * Step size = 1
-    * Range = -10 to 10
-    * Scroll distance factor = 100f
-    * scroller line follows the number selected
-    * scroller line speed = 1.5f (irrelevant as scroller line follows the number selected)
-    * number is to the left of the scroller
-    * on number selection nothing happens
-    */
-    Row(modifier = Modifier.fillMaxWidth(0.6f), horizontalArrangement = Arrangement.End) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         NumberScroller()
     }
 }
 
 @Composable
-fun VerticalScrollerUp() {
-    /*
-    * Completely custom scroller style provided
-    * Scroller is vertical & must scroll UP to increment
-    * Start number = 56
-    * Step size = 2
-    * Range = 50 to 150
-    * Scroll distance factor = 25f (scroll 25f units to change the number)
-    * scroller line follows the number selected
-    * number is above the scroller
-    * on number selection nothing happens
-    */
+fun One() {
     val customStyle = ScrollerStyle(
         scrollerWidth = 50.dp,
         scrollerHeight = 100.dp,
@@ -103,7 +80,7 @@ fun VerticalScrollerUp() {
         lineRounding = RoundedCornerShape(5.dp),
     )
 
-    Row(modifier = Modifier.fillMaxWidth(0.6f), horizontalArrangement = Arrangement.Start) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         NumberScroller(
             style = customStyle,
             behaviour = ScrollerBehaviour(
@@ -117,19 +94,7 @@ fun VerticalScrollerUp() {
 }
 
 @Composable
-fun VerticalScrollerDown() {
-    /*
-    * Completely custom scroller style provided
-    * Scroller is vertical & must scroll DOWN to increment
-    * Start number = 15
-    * Step size = 0.5
-    * Range = -20 to 30
-    * Scroll distance factor = 50f (scroll 50f units to change the number)
-    * scroller line doesn't follow the number selected
-    * scroller line speed = 0.5f
-    * number is to the right of the scroller
-    * on number selection nothing happens
-    */
+fun Two() {
     val customStyle = ScrollerStyle(
         scrollerWidth = 50.dp,
         scrollerHeight = 100.dp,
@@ -146,7 +111,7 @@ fun VerticalScrollerDown() {
         lineRounding = RoundedCornerShape(5.dp),
     )
 
-    Row(modifier = Modifier.fillMaxWidth(0.6f), horizontalArrangement = Arrangement.Start) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
         NumberScroller(
             style = customStyle,
             behaviour = ScrollerBehaviour(
@@ -161,8 +126,41 @@ fun VerticalScrollerDown() {
     }
 }
 
+@Composable
+fun Three() {
+    val customStyle = ScrollerStyle(
+        scrollerWidth = 200.dp,
+        scrollerHeight = 20.dp,
+        scrollerColor = MaterialTheme.colorScheme.primaryContainer,
+        scrollerRounding = RoundedCornerShape(20.dp),
+        scrollerDirection = ScrollerDirection.HorizontalLeft,
+        numberFontSize = 30.sp,
+        numberDistanceToScroller = 30.dp,
+        numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        numberPosition = NumberPosition.Left,
+        lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        lineWidthFactor = 0.03f,
+        lineThickness = 8.dp,
+        lineRounding = RoundedCornerShape(5.dp),
+    )
+
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        NumberScroller(
+            style = customStyle,
+            behaviour = ScrollerBehaviour(
+                startNumber = 5f,
+                step = 0.5f,
+                range = -20f..30f,
+                lineSpeed = 5f,
+                scrollDistanceFactor = 50f,
+                syncLinePosWithNumber = false,
+            )
+        )
+    }
+}
+
 @Composable()
-fun HorizontalScrollerRight() {
+fun Four() {
     /*
     * Update text when user stops dragging!
     * Get this functionality by specifying what happens onDragEnd in the number scroller params
@@ -175,18 +173,6 @@ fun HorizontalScrollerRight() {
         text = "Scrolled to: $numberSelected"
     }
 
-    /*
-    * Completely custom scroller style provided
-    * Scroller is horizontal & must scroll RIGHT to increment
-    * Start number = 0
-    * Step size = 1
-    * Range = -10 to 10
-    * Scroll distance factor = 50f (scroll 50f units to change the number)
-    * scroller line doesn't follow the number selected
-    * scroller line speed = 2.4f
-    * number is below the scroller
-    * on number selection, text above scroller is updated
-    */
     val customStyle = ScrollerStyle(
         scrollerWidth = 100.dp,
         scrollerHeight = 50.dp,
@@ -203,7 +189,7 @@ fun HorizontalScrollerRight() {
         lineRounding = RoundedCornerShape(5.dp),
     )
 
-    Row(modifier = Modifier.fillMaxWidth(0.6f), horizontalArrangement = Arrangement.Center) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         NumberScroller(
             style = customStyle,
             behaviour = ScrollerBehaviour(
