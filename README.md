@@ -2,11 +2,14 @@
 
 The `NumberScroller` component is a customisable UI element that allows users to scroll a number (decimals supported) through a specified range using up/down and left/right drag gestures. 
 
+The `DetachedNumberScroller` component is the almost the same, but instead supports more than one scrollable number. 
+
 [![](https://jitpack.io/v/Mintakaaaa/number-scroller-compose.svg)](https://jitpack.io/#Mintakaaaa/number-scroller-compose)
 
 # Demo
 
-![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/demo.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/number-scroller-demo.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo.gif "Scroller Demo")
 
 # Installation
 ## Gradle
