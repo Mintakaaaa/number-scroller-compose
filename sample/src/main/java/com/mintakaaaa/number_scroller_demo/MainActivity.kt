@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,39 +27,183 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mintakaaaa.number_scroller.DetachedNumberScroller
+import com.mintakaaaa.number_scroller.DetachedScrollerStyle
 import com.mintakaaaa.number_scroller.NumberPosition
 import com.mintakaaaa.number_scroller.NumberScroller
 import com.mintakaaaa.number_scroller.ScrollerBehaviour
+import com.mintakaaaa.number_scroller.ScrollerController
 import com.mintakaaaa.number_scroller.ScrollerDirection
 import com.mintakaaaa.number_scroller.ScrollerStyle
+import com.mintakaaaa.number_scroller.ScrollerTarget
+import com.mintakaaaa.number_scroller.TargetStyle
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-                    .padding(15.dp),
-                verticalArrangement = Arrangement.Center
-            ) {
-                DefaultScroller()
-                Spacer(Modifier.weight(1f))
-                One()
-                Spacer(Modifier.weight(1f))
-                Two()
-                Spacer(Modifier.weight(1f))
-                Three()
-                Spacer(Modifier.weight(1f))
-                Four()
-            }
+            NumberScrollerSample()
+//            DetachedScrollerSample()
         }
     }
 }
 
 @Composable
+fun NumberScrollerSample() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(15.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Number Scroller Sample", fontSize = 30.sp)
+        Spacer(Modifier.weight(1f))
+        DefaultScroller()
+        Spacer(Modifier.weight(1f))
+        One()
+        Spacer(Modifier.weight(1f))
+        Two()
+        Spacer(Modifier.weight(1f))
+        Three()
+        Spacer(Modifier.weight(1f))
+        Four()
+    }
+}
+
+@Composable
+fun DetachedScrollerSample() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(15.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Detached number scroller", fontSize = 30.sp)
+        Spacer(Modifier.weight(1f))
+        Text(text = "Default", fontSize = 30.sp)
+        HorizontalDivider(Modifier.padding(bottom = 10.dp))
+
+        DetachedDefault() // SCROLLER
+
+        Spacer(Modifier.weight(1f))
+        Text(text = "Custom", fontSize = 30.sp)
+        HorizontalDivider()
+
+        DetachedOne() // SCROLLER
+
+        Spacer(Modifier.weight(1f))
+    }
+}
+
+@Composable
+fun DetachedDefault() {
+    val controller = remember { ScrollerController() }
+
+    // set up your scroller targets however you like, providing them with a unique ID
+    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
+        Column {
+            Row {
+                ScrollerTarget(controller = controller, id = 1)
+                Spacer(Modifier.width(10.dp))
+                ScrollerTarget(controller = controller, id = 2)
+                Spacer(Modifier.width(10.dp))
+                ScrollerTarget(controller = controller, id = 3)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Row {
+                ScrollerTarget(controller = controller, id = 4)
+                Spacer(Modifier.width(10.dp))
+                ScrollerTarget(controller = controller, id = 5)
+                Spacer(Modifier.width(10.dp))
+                ScrollerTarget(controller = controller, id = 6)
+            }
+        }
+        Spacer(Modifier.width(10.dp))
+        // place your detached scroller anywhere on the screen
+        DetachedNumberScroller(controller = controller, linkedTo = listOf(1, 2, 3, 4, 5, 6))
+    }
+}
+
+@Composable
+fun DetachedOne() {
+    // optional style, targetStyle, and behaviour parameters...
+    val style = DetachedScrollerStyle(
+        scrollerWidth = 300.dp,
+        scrollerHeight = 20.dp,
+        scrollerColor = MaterialTheme.colorScheme.primaryContainer,
+        scrollerRounding = RoundedCornerShape(20.dp),
+        scrollerDirection = ScrollerDirection.HorizontalRight,
+        lineWidthFactor = 0.5f,
+        lineThickness = 7.dp,
+        lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        lineRounding = RoundedCornerShape(4.dp),
+    )
+    val targetStyle = TargetStyle(
+        numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        numberFontSize = 25.sp,
+        background = MaterialTheme.colorScheme.primaryContainer,
+        selectedBackground = MaterialTheme.colorScheme.tertiaryContainer,
+        boxRounding = RoundedCornerShape(6.dp),
+    )
+    val behaviour = ScrollerBehaviour(
+        syncLinePosWithNumber = false,
+        lineSpeed = 6f,
+    )
+    // ...are supplied to scroller controller
+    val controller = remember { ScrollerController(style = style, targetStyle = targetStyle, behaviour = behaviour) }
+
+    // updating text based on which target is updated
+    var text by remember { mutableStateOf("Scroll me!") }
+    Text(text, style = TextStyle(fontSize = 40.sp), modifier = Modifier.padding(bottom = 20.dp))
+    val updateText: (Int, Float) -> Unit = { id, numberSelected ->
+        text = "id: $id, number: $numberSelected"
+    }
+    // ----------------------------------------------
+
+    // set up your scroller targets however you like, providing them with a unique ID
+    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
+
+        ScrollerTarget(controller = controller, id = 1, onDragEnd = { number ->
+            updateText(1, number)
+        })
+        Spacer(Modifier.width(10.dp))
+        ScrollerTarget(controller = controller, id = 2, onDragEnd = { number ->
+            updateText(2, number)
+        })
+        Spacer(Modifier.width(10.dp))
+        ScrollerTarget(controller = controller, id = 3, onDragEnd = { number ->
+            updateText(3, number)
+        })
+        Spacer(Modifier.width(10.dp))
+        ScrollerTarget(controller = controller, id = 4, onDragEnd = { number ->
+            updateText(4, number)
+        })
+        Spacer(Modifier.width(10.dp))
+        ScrollerTarget(controller = controller, id = 5, onDragEnd = { number ->
+            updateText(5, number)
+        })
+        Spacer(Modifier.width(10.dp))
+        ScrollerTarget(controller = controller, id = 6, onDragEnd = { number ->
+            updateText(6, number)
+        })
+
+    }
+    Spacer(Modifier.height(10.dp))
+    // place your detached scroller anywhere on the screen
+    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
+        DetachedNumberScroller(controller = controller, linkedTo = listOf(1, 2, 3, 4, 5, 6))
+    }
+}
+
+@Composable
 fun DefaultScroller() {
+    Row { Text(text = "Default", fontSize = 30.sp) }
+    HorizontalDivider(Modifier.padding(bottom = 10.dp))
+
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         NumberScroller()
     }
@@ -79,6 +226,9 @@ fun One() {
         lineThickness = 8.dp,
         lineRounding = RoundedCornerShape(5.dp),
     )
+
+    Row { Text(text = "Custom", fontSize = 30.sp) }
+    HorizontalDivider(Modifier.padding(bottom = 10.dp))
 
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         NumberScroller(
@@ -159,7 +309,7 @@ fun Three() {
     }
 }
 
-@Composable()
+@Composable
 fun Four() {
     /*
     * Update text when user stops dragging!
