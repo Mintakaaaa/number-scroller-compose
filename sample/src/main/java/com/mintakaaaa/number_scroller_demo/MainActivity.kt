@@ -30,11 +30,11 @@ import androidx.compose.ui.unit.sp
 import com.mintakaaaa.number_scroller.DetachedNumberScroller
 import com.mintakaaaa.number_scroller.DetachedScrollerBehaviour
 import com.mintakaaaa.number_scroller.DetachedScrollerStyle
+import com.mintakaaaa.number_scroller.IncrementDirection
 import com.mintakaaaa.number_scroller.NumberPosition
 import com.mintakaaaa.number_scroller.NumberScroller
 import com.mintakaaaa.number_scroller.ScrollerBehaviour
 import com.mintakaaaa.number_scroller.ScrollerController
-import com.mintakaaaa.number_scroller.ScrollerDirection
 import com.mintakaaaa.number_scroller.ScrollerStyle
 import com.mintakaaaa.number_scroller.ScrollerTarget
 import com.mintakaaaa.number_scroller.TargetBehaviour
@@ -44,8 +44,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-//            NumberScrollerSample()
-            DetachedScrollerSample()
+            NumberScrollerSample()
+//            DetachedScrollerSample()
         }
     }
 }
@@ -139,7 +139,6 @@ fun DetachedCustom() {
         scrollerHeight = 20.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(20.dp),
-        scrollerDirection = ScrollerDirection.HorizontalRight,
         lineWidthFactor = 0.5f,
         lineThickness = 7.dp,
         lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -158,6 +157,7 @@ fun DetachedCustom() {
     val scrollerBehaviour = DetachedScrollerBehaviour(
         syncLinePosWithNumber = false,
         lineSpeed = 6f,
+        incrementDirection = IncrementDirection.Right,
     )
     val targetOneBehaviour = TargetBehaviour(
         step = 2f,
@@ -175,7 +175,7 @@ fun DetachedCustom() {
         range = -5f..5f
     )
     // ...are supplied to scroller controller
-    val controller = remember { ScrollerController(style = detachedStyle, targetStyle = targetStyle, scrollerBehaviour = scrollerBehaviour, defaultTargetBehaviour = defaultTargetBehaviour) }
+    val controller = remember { ScrollerController(scrollerStyle = detachedStyle, targetStyle = targetStyle, scrollerBehaviour = scrollerBehaviour, defaultTargetBehaviour = defaultTargetBehaviour) }
 
     // updating text based on which target is updated
     var text by remember { mutableStateOf("Scroll me!") }
@@ -240,7 +240,6 @@ fun One() {
         scrollerHeight = 100.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(20.dp),
-        scrollerDirection = ScrollerDirection.VerticalUp,
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -262,6 +261,7 @@ fun One() {
                 startNumber = 56f,
                 range = 50f..150f,
                 scrollDistanceFactor = 25f,
+                incrementDirection = IncrementDirection.Up
             )
         )
     }
@@ -274,7 +274,6 @@ fun Two() {
         scrollerHeight = 100.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(20.dp),
-        scrollerDirection = ScrollerDirection.VerticalDown,
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -295,6 +294,7 @@ fun Two() {
                 lineSpeed = 0.5f,
                 scrollDistanceFactor = 50f,
                 syncLinePosWithNumber = false,
+                incrementDirection = IncrementDirection.Down
             )
         )
     }
@@ -307,7 +307,6 @@ fun Three() {
         scrollerHeight = 20.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(20.dp),
-        scrollerDirection = ScrollerDirection.HorizontalLeft,
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -328,6 +327,7 @@ fun Three() {
                 lineSpeed = 5f,
                 scrollDistanceFactor = 50f,
                 syncLinePosWithNumber = false,
+                incrementDirection = IncrementDirection.Left
             )
         )
     }
@@ -352,7 +352,6 @@ fun Four() {
         scrollerHeight = 50.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(10.dp),
-        scrollerDirection = ScrollerDirection.HorizontalRight,
         numberFontSize = 30.sp,
         numberDistanceToScroller = 0.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -371,7 +370,8 @@ fun Four() {
                 lineSpeed = 2.4f,
                 startNumber = 5f,
                 scrollDistanceFactor = 50f,
-                syncLinePosWithNumber = false
+                syncLinePosWithNumber = false,
+                incrementDirection = IncrementDirection.Right
             ),
             onDragEnd = { numberSelected -> updateText(numberSelected) }
         )

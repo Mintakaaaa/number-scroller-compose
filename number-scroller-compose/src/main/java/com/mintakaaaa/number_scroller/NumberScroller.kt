@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.sp
  * @property numberFontSize The font size of the number text. Default is 30.sp.
  * @property numberDistanceToScroller The distance between the number text and the scroller, in density-independent pixels (dp). Default is 30.dp.
  * @property numberPosition The position of the number relative to the scroller. Default is [NumberPosition.Left].
- * @property scrollerDirection The direction in which the scroller operates. Default is [ScrollerDirection.VerticalUp].
  */
 data class ScrollerStyle(
     val scrollerHeight: Dp = 60.dp,
@@ -64,19 +63,19 @@ data class ScrollerStyle(
     val numberFontSize: TextUnit = 30.sp,
     val numberDistanceToScroller: Dp = 30.dp,
     val numberPosition: NumberPosition = NumberPosition.Left,
-    val scrollerDirection: ScrollerDirection = ScrollerDirection.VerticalUp,
 )
 
 /**
  *  * Data class representing the behaviour options for the [NumberScroller] component.
  *
- * @param startNumber The initial value of the number displayed by the scroller. Default is 0f.
- * @param step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
- * @param range The range of values that the number can be set to. Default is -10f to 10f.
- * @param scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
- * @param lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
- * @param syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
-**/
+ * @property startNumber The initial value of the number displayed by the scroller. Default is 0f.
+ * @property step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
+ * @property range The range of values that the number can be set to. Default is -10f to 10f.
+ * @property scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
+ * @property lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
+ * @property syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
+ * @property incrementDirection The direction in which the scroller increments. Default is [IncrementDirection.Up].
+ **/
 data class ScrollerBehaviour(
     val startNumber: Float = 0f,
     val step: Float = 1f,
@@ -84,6 +83,7 @@ data class ScrollerBehaviour(
     val scrollDistanceFactor: Float = 100f,
     val lineSpeed: Float = 1.5f,
     val syncLinePosWithNumber: Boolean = true,
+    val incrementDirection: IncrementDirection = IncrementDirection.Up,
 )
 
 /**
@@ -94,10 +94,10 @@ enum class NumberPosition {
 }
 
 /**
- * Enum representing the possible directions in which the scroller can operate.
+ * Enum representing the possible directions in which the scroller can increment.
  */
-enum class ScrollerDirection {
-    VerticalUp, VerticalDown, HorizontalLeft, HorizontalRight
+enum class IncrementDirection {
+    Up, Down, Left, Right
 }
 
 /**
@@ -125,21 +125,21 @@ fun NumberScroller(
 
     val repositionLineByNumber: () -> Unit = {
         val normalizedValue = (number - behaviour.range.start) / (behaviour.range.endInclusive - behaviour.range.start)
-        val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+        val dimensionPx = if (behaviour.incrementDirection in listOf(IncrementDirection.Left, IncrementDirection.Right)) {
             scrollerWidthPx // confine scroller line within scroller WIDTH
         } else {
             scrollerHeightPx // confine scroller line within scroller HEIGHT
         }
 
         val offset = (normalizedValue * dimensionPx - dimensionPx / 2)
-        lineOffset.floatValue = when (style.scrollerDirection) {
-            ScrollerDirection.HorizontalLeft, ScrollerDirection.VerticalUp -> -offset
-            ScrollerDirection.HorizontalRight, ScrollerDirection.VerticalDown -> offset
+        lineOffset.floatValue = when (behaviour.incrementDirection) {
+            IncrementDirection.Left, IncrementDirection.Up -> -offset
+            IncrementDirection.Right, IncrementDirection.Down -> offset
         }
     }
 
     val repositionLineByDrag: (Float) -> Unit = { dragAmount ->
-        val dimensionPx = if (style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+        val dimensionPx = if (behaviour.incrementDirection in listOf(IncrementDirection.Left, IncrementDirection.Right)) {
             scrollerWidthPx // confine scroller line within scroller WIDTH
         } else {
             scrollerHeightPx // confine scroller line within scroller HEIGHT
@@ -153,8 +153,8 @@ fun NumberScroller(
     else repositionLineByDrag(0f)
 
     val updateNumber: (Float) -> Unit = { totalDrag ->
-        number = when (style.scrollerDirection) {
-            ScrollerDirection.VerticalUp, ScrollerDirection.HorizontalLeft -> {
+        number = when (behaviour.incrementDirection) {
+            IncrementDirection.Up, IncrementDirection.Left -> {
                 if (totalDrag <= -behaviour.scrollDistanceFactor) { // dragging up/left past threshold
                     (number + behaviour.step).coerceAtMost(behaviour.range.endInclusive)
                 } else { // dragging down/right past threshold
@@ -162,7 +162,7 @@ fun NumberScroller(
                 }
             }
 
-            ScrollerDirection.VerticalDown, ScrollerDirection.HorizontalRight -> {
+            IncrementDirection.Down, IncrementDirection.Right -> {
                 if (totalDrag <= -behaviour.scrollDistanceFactor) { // dragging up/left past threshold
                     (number - behaviour.step).coerceAtLeast(behaviour.range.start)
                 } else { // dragging down/right past threshold
@@ -260,8 +260,8 @@ fun ScrollerBox(
             .clip(style.scrollerRounding)
             .background(style.scrollerColor)
             .pointerInput(Unit) {
-                when (style.scrollerDirection) {
-                    ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
+                when (behaviour.incrementDirection) {
+                    IncrementDirection.Left, IncrementDirection.Right -> {
                         detectHorizontalDragGestures(
                             onDragEnd = {
                                 if (!behaviour.syncLinePosWithNumber) lineOffset.value = 0f
@@ -278,7 +278,7 @@ fun ScrollerBox(
                         }
                     }
 
-                    ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
+                    IncrementDirection.Up, IncrementDirection.Down -> {
                         detectVerticalDragGestures(
                             onDragEnd = {
                                 if (!behaviour.syncLinePosWithNumber) lineOffset.value = 0f
@@ -300,15 +300,15 @@ fun ScrollerBox(
         Box( // Scroller Line
             modifier = Modifier
                 .then(
-                    when (style.scrollerDirection) {
-                        ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
+                    when (behaviour.incrementDirection) {
+                        IncrementDirection.Left, IncrementDirection.Right -> {
                             Modifier
                                 .width(style.lineThickness)
                                 .height(style.scrollerHeight * style.lineWidthFactor)
                                 .offset { IntOffset(lineOffset.value.toInt(), 0) }
                         }
 
-                        ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
+                        IncrementDirection.Up, IncrementDirection.Down -> {
                             Modifier
                                 .width(style.scrollerWidth * style.lineWidthFactor)
                                 .height(style.lineThickness)

@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.sp
  * @property lineRounding The shape of the corners of the scroller line. Default is a RoundedCornerShape with a 4.dp radius.
  * @property lineThickness The thickness of the scroller line, in density-independent pixels (dp). Default is 4.dp.
  * @property lineWidthFactor The proportion of the scroller width that the line occupies. Default is 0.8f.
- * @property scrollerDirection The direction in which the scroller operates. Default is [ScrollerDirection.VerticalUp].
  */
 data class DetachedScrollerStyle(
     val scrollerHeight: Dp = 60.dp,
@@ -57,7 +56,6 @@ data class DetachedScrollerStyle(
     val lineRounding: RoundedCornerShape = RoundedCornerShape(4.dp),
     val lineThickness: Dp = 4.dp,
     val lineWidthFactor: Float = 0.8f,
-    val scrollerDirection: ScrollerDirection = ScrollerDirection.VerticalUp,
 )
 
 /**
@@ -77,11 +75,13 @@ data class TargetBehaviour(
  * @property scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
  * @property lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
  * @property syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
+ * @property incrementDirection The direction in which the scroller increments. Default is [IncrementDirection.Up].
  */
 data class DetachedScrollerBehaviour(
     val scrollDistanceFactor: Float = 100f,
     val lineSpeed: Float = 1.5f,
     val syncLinePosWithNumber: Boolean = true,
+    val incrementDirection: IncrementDirection = IncrementDirection.Up,
 )
 
 /**
@@ -108,7 +108,7 @@ data class TargetStyle(
 )
 
 class ScrollerController(
-    val style: DetachedScrollerStyle = DetachedScrollerStyle(),
+    val scrollerStyle: DetachedScrollerStyle = DetachedScrollerStyle(),
     val targetStyle: TargetStyle = TargetStyle(),
     val scrollerBehaviour: DetachedScrollerBehaviour = DetachedScrollerBehaviour(),
     val defaultTargetBehaviour: TargetBehaviour? = TargetBehaviour()
@@ -148,8 +148,8 @@ class ScrollerController(
     fun updateSelectedTarget(totalDrag: Float) { // update selected target number based on scroll
         selectedTargetId?.let { id ->
             targets[id]?.let { target ->
-                target.state.floatValue = when (style.scrollerDirection) {
-                    ScrollerDirection.VerticalUp, ScrollerDirection.HorizontalLeft -> {
+                target.state.floatValue = when (scrollerBehaviour.incrementDirection) {
+                    IncrementDirection.Up, IncrementDirection.Left -> {
                         if (totalDrag <= -scrollerBehaviour.scrollDistanceFactor) { // dragging up/left past threshold
                             (target.state.floatValue + target.behaviour.step).coerceAtMost(target.behaviour.range.endInclusive)
                         } else { // dragging down/right past threshold
@@ -157,7 +157,7 @@ class ScrollerController(
                         }
                     }
 
-                    ScrollerDirection.VerticalDown, ScrollerDirection.HorizontalRight -> {
+                    IncrementDirection.Down, IncrementDirection.Right -> {
                         if (totalDrag <= -scrollerBehaviour.scrollDistanceFactor) { // dragging up/left past threshold
                             (target.state.floatValue - target.behaviour.step).coerceAtLeast(target.behaviour.range.start)
                         } else { // dragging down/right past threshold
@@ -178,7 +178,16 @@ class ScrollerController(
     }
 }
 
-
+/**
+ * Composable function that displays a `ScrollerTarget` UI component.
+ *
+ * The [ScrollerTarget] is a target area that can be linked to a scroller and used to display a number.
+ *
+ * @param controller The controller managing the scroller and its targets.
+ * @param targetBehaviour The behaviour options specific to this target. If null, the default behaviour from the controller will be used. Default is null.
+ * @param id The unique identifier for this target.
+ * @param onDragEnd Callback function called when the drag operation ends, with the current number as the parameter. Default is an empty function.
+ */
 @Composable
 fun ScrollerTarget(controller: ScrollerController, targetBehaviour: TargetBehaviour? = null, id: Int, onDragEnd: (Float) -> Unit = {}) {
 
@@ -206,6 +215,14 @@ fun ScrollerTarget(controller: ScrollerController, targetBehaviour: TargetBehavi
     }
 }
 
+/**
+ * Composable function that displays a number scroller UI component.
+ *
+ * The [DetachedScrollerBehaviour] allows users to scroll a number up/down/left/right based on drag gestures.
+ *
+ * @param controller The controller managing this scroller. Default is None.
+ * @param linkedTo A list of target IDs to link the scroller to. Default is Empty list.
+ */
 @Composable
 fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) {
     LaunchedEffect(controller) {
@@ -215,8 +232,8 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
     var selectedTargetId: Int
     var selectedTarget: ScrollerController.Target
 
-    val scrollerHeightPx = with(LocalDensity.current) { controller.style.scrollerHeight.toPx() }
-    val scrollerWidthPx = with(LocalDensity.current) { controller.style.scrollerWidth.toPx() }
+    val scrollerHeightPx = with(LocalDensity.current) { controller.scrollerStyle.scrollerHeight.toPx() }
+    val scrollerWidthPx = with(LocalDensity.current) { controller.scrollerStyle.scrollerWidth.toPx() }
 
     val lineOffset = remember { mutableFloatStateOf(0f) }
 
@@ -226,22 +243,22 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
             selectedTarget = controller.getTarget(selectedTargetId)!!
 
             val normalizedValue = (selectedTarget.state.floatValue - selectedTarget.behaviour.range.start) / (selectedTarget.behaviour.range.endInclusive - selectedTarget.behaviour.range.start)
-            val dimensionPx = if (controller.style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+            val dimensionPx = if (controller.scrollerBehaviour.incrementDirection in listOf(IncrementDirection.Left, IncrementDirection.Right)) {
                 scrollerWidthPx // confine scroller line within scroller WIDTH
             } else {
                 scrollerHeightPx // confine scroller line within scroller HEIGHT
             }
 
             val offset = (normalizedValue * dimensionPx - dimensionPx / 2)
-            lineOffset.floatValue = when (controller.style.scrollerDirection) {
-                ScrollerDirection.HorizontalLeft, ScrollerDirection.VerticalUp -> -offset
-                ScrollerDirection.HorizontalRight, ScrollerDirection.VerticalDown -> offset
+            lineOffset.floatValue = when (controller.scrollerBehaviour.incrementDirection) {
+                IncrementDirection.Left, IncrementDirection.Up -> -offset
+                IncrementDirection.Right, IncrementDirection.Down -> offset
             }
         }
     }
 
     val repositionLineByDrag: (Float) -> Unit = { dragAmount ->
-        val dimensionPx = if (controller.style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
+        val dimensionPx = if (controller.scrollerBehaviour.incrementDirection in listOf(IncrementDirection.Left, IncrementDirection.Right)) {
             scrollerWidthPx // confine scroller line within scroller WIDTH
         } else {
             scrollerHeightPx // confine scroller line within scroller HEIGHT
@@ -261,7 +278,15 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
     ScrollerBox(updateNumber, repositionLineByDrag, repositionLineByNumber, lineOffset, controller)
 }
 
-
+/**
+ * Composable function that displays the scroller box with a draggable line.
+ *
+ * @param updateNumber Function to update the number based on drag amount.
+ * @param repositionLineByDrag A function to reposition the scroller line based on drag amount.
+ * @param repositionLineByNumber A function to reposition the scroller line based on the current number value.
+ * @param lineOffset The current offset of the scroller line.
+ * @param controller The controller managing this scroller.
+ */
 @Composable
 fun ScrollerBox(
     updateNumber: (Float) -> Unit,
@@ -274,13 +299,13 @@ fun ScrollerBox(
 
     Box(
         modifier = Modifier
-            .width(controller.style.scrollerWidth)
-            .height(controller.style.scrollerHeight)
-            .clip(controller.style.scrollerRounding)
-            .background(controller.style.scrollerColor)
+            .width(controller.scrollerStyle.scrollerWidth)
+            .height(controller.scrollerStyle.scrollerHeight)
+            .clip(controller.scrollerStyle.scrollerRounding)
+            .background(controller.scrollerStyle.scrollerColor)
             .pointerInput(Unit) {
-                when (controller.style.scrollerDirection) {
-                    ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
+                when (controller.scrollerBehaviour.incrementDirection) {
+                    IncrementDirection.Left, IncrementDirection.Right -> {
                         detectHorizontalDragGestures(
                             onDragEnd = {
                                 if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
@@ -297,7 +322,7 @@ fun ScrollerBox(
                         }
                     }
 
-                    ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
+                    IncrementDirection.Up, IncrementDirection.Down -> {
                         detectVerticalDragGestures(
                             onDragEnd = {
                                 if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
@@ -319,30 +344,37 @@ fun ScrollerBox(
         Box(
             modifier = Modifier
                 .then(
-                    when (controller.style.scrollerDirection) {
-                        ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
+                    when (controller.scrollerBehaviour.incrementDirection) {
+                        IncrementDirection.Left, IncrementDirection.Right -> {
                             Modifier
-                                .width(controller.style.lineThickness)
-                                .height(controller.style.scrollerHeight * controller.style.lineWidthFactor)
+                                .width(controller.scrollerStyle.lineThickness)
+                                .height(controller.scrollerStyle.scrollerHeight * controller.scrollerStyle.lineWidthFactor)
                                 .offset { IntOffset(lineOffset.value.toInt(), 0) }
                         }
 
-                        ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
+                        IncrementDirection.Up, IncrementDirection.Down -> {
                             Modifier
-                                .width(controller.style.scrollerWidth * controller.style.lineWidthFactor)
-                                .height(controller.style.lineThickness)
+                                .width(controller.scrollerStyle.scrollerWidth * controller.scrollerStyle.lineWidthFactor)
+                                .height(controller.scrollerStyle.lineThickness)
                                 .offset { IntOffset(0, lineOffset.value.toInt()) }
                         }
                     }
                 )
                 .align(Alignment.Center)
-                .clip(controller.style.lineRounding)
-                .background(controller.style.lineColor)
+                .clip(controller.scrollerStyle.lineRounding)
+                .background(controller.scrollerStyle.lineColor)
 
         )
     }
 }
 
+/**
+ * Composable function that displays the number text with styling.
+ *
+ * @param targetStyle The styling options for the number text.
+ * @param step The step value for formatting the number.
+ * @param number The current number to be displayed.
+ */
 @SuppressLint("DefaultLocale")
 @Composable
 fun NumberText(targetStyle: TargetStyle, step: Float, number: Float) {
