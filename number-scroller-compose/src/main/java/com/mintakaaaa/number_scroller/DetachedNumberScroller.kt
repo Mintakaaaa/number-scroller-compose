@@ -61,6 +61,30 @@ data class DetachedScrollerStyle(
 )
 
 /**
+ * Data class representing the behaviour options for the [ScrollerTarget] component.
+ * @property startNumber The initial value of the number displayed by the scroller. Default is 0f.
+ * @property step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
+ * @property range The range of values that the number can be set to. Default is -10f to 10f.
+ */
+data class TargetBehaviour(
+    val startNumber: Float = 0f,
+    val step: Float = 1f,
+    val range: ClosedFloatingPointRange<Float> = -10f..10f,
+)
+
+/**
+ * Data class representing the behaviour options for the [DetachedNumberScroller] component.
+ * @property scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
+ * @property lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
+ * @property syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
+ */
+data class DetachedScrollerBehaviour(
+    val scrollDistanceFactor: Float = 100f,
+    val lineSpeed: Float = 1.5f,
+    val syncLinePosWithNumber: Boolean = true,
+)
+
+/**
  * Data class representing the styling options for the [ScrollerTarget] component.
  *
  * @property numberColor The color of the number displayed in the target. Default is Color.Black.
@@ -74,7 +98,7 @@ data class DetachedScrollerStyle(
  */
 data class TargetStyle(
     val numberColor: Color = Color.Black,
-    val numberFontSize: TextUnit = 30.sp,
+    val numberFontSize: TextUnit = 25.sp,
     val boxPadding: Dp = 5.dp,
     val boxWidth: Dp = 50.dp,
     val boxHeight: Dp = 50.dp,
@@ -86,7 +110,8 @@ data class TargetStyle(
 class ScrollerController(
     val style: DetachedScrollerStyle = DetachedScrollerStyle(),
     val targetStyle: TargetStyle = TargetStyle(),
-    val behaviour: ScrollerBehaviour = ScrollerBehaviour()
+    val scrollerBehaviour: DetachedScrollerBehaviour = DetachedScrollerBehaviour(),
+    val defaultTargetBehaviour: TargetBehaviour? = TargetBehaviour()
 ) {
     val targets = mutableMapOf<Int, Target>() // all scroller targets
 
@@ -95,13 +120,14 @@ class ScrollerController(
 
     data class Target( // logical equivalent of ScrollerTarget composable
         val state: MutableFloatState,
+        val behaviour: TargetBehaviour,
         val onDragEnd: ((Float) -> Unit)?
     )
 
-    fun registerTarget(id: Int, onDragEnd: ((Float) -> Unit)? = null): MutableFloatState {
+    fun registerTarget(id: Int, behaviour: TargetBehaviour, onDragEnd: ((Float) -> Unit)? = null): MutableFloatState {
         // register a target and return its state
-        val state = mutableFloatStateOf(0f)
-        targets[id] = Target(state, onDragEnd)
+        val state = mutableFloatStateOf(behaviour.startNumber)
+        targets[id] = Target(state, behaviour, onDragEnd)
         return state
     }
 
@@ -109,8 +135,8 @@ class ScrollerController(
         selectedTargetId = ids.firstOrNull { targets.containsKey(it) }
     }
 
-    fun getTargetState(id: Int): MutableFloatState? { // get target state by ID
-        return targets[id]?.state
+    fun getTarget(id: Int): Target? { // get target state by ID
+        return targets[id]
     }
 
     fun selectTarget(id: Int) { // set selected target by ID
@@ -124,18 +150,18 @@ class ScrollerController(
             targets[id]?.let { target ->
                 target.state.floatValue = when (style.scrollerDirection) {
                     ScrollerDirection.VerticalUp, ScrollerDirection.HorizontalLeft -> {
-                        if (totalDrag <= -behaviour.scrollDistanceFactor) { // dragging up/left past threshold
-                            (target.state.floatValue + behaviour.step).coerceAtMost(behaviour.range.endInclusive)
+                        if (totalDrag <= -scrollerBehaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                            (target.state.floatValue + target.behaviour.step).coerceAtMost(target.behaviour.range.endInclusive)
                         } else { // dragging down/right past threshold
-                            (target.state.floatValue - behaviour.step).coerceAtLeast(behaviour.range.start)
+                            (target.state.floatValue - target.behaviour.step).coerceAtLeast(target.behaviour.range.start)
                         }
                     }
 
                     ScrollerDirection.VerticalDown, ScrollerDirection.HorizontalRight -> {
-                        if (totalDrag <= -behaviour.scrollDistanceFactor) { // dragging up/left past threshold
-                            (target.state.floatValue - behaviour.step).coerceAtLeast(behaviour.range.start)
+                        if (totalDrag <= -scrollerBehaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                            (target.state.floatValue - target.behaviour.step).coerceAtLeast(target.behaviour.range.start)
                         } else { // dragging down/right past threshold
-                            (target.state.floatValue + behaviour.step).coerceAtMost(behaviour.range.endInclusive)
+                            (target.state.floatValue + target.behaviour.step).coerceAtMost(target.behaviour.range.endInclusive)
                         }
                     }
                 }
@@ -154,8 +180,13 @@ class ScrollerController(
 
 
 @Composable
-fun ScrollerTarget(controller: ScrollerController, id: Int, onDragEnd: (Float) -> Unit = {}) {
-    val targetState = remember { controller.registerTarget(id, onDragEnd) }
+fun ScrollerTarget(controller: ScrollerController, targetBehaviour: TargetBehaviour? = null, id: Int, onDragEnd: (Float) -> Unit = {}) {
+
+    // if behaviour for this target is passed, use it, else use default target behaviour
+    val effectiveTargetBehaviour = targetBehaviour ?: controller.defaultTargetBehaviour!!
+
+    // register target and get its state
+    val targetState = remember { controller.registerTarget(id, effectiveTargetBehaviour, onDragEnd) }
     val isSelected = controller.selectedTargetId == id
 
     Box(
@@ -171,7 +202,7 @@ fun ScrollerTarget(controller: ScrollerController, id: Int, onDragEnd: (Float) -
             .clickable { controller.selectTarget(id) },
         contentAlignment = Alignment.Center
     ) {
-        NumberText(controller.targetStyle, step = controller.behaviour.step, number = targetState.floatValue)
+        NumberText(controller.targetStyle, step = effectiveTargetBehaviour.step, number = targetState.floatValue)
     }
 }
 
@@ -182,7 +213,7 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
     }
 
     var selectedTargetId: Int
-    var selectedTargetState: MutableFloatState
+    var selectedTarget: ScrollerController.Target
 
     val scrollerHeightPx = with(LocalDensity.current) { controller.style.scrollerHeight.toPx() }
     val scrollerWidthPx = with(LocalDensity.current) { controller.style.scrollerWidth.toPx() }
@@ -192,9 +223,9 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
     val repositionLineByNumber: () -> Unit = {
         controller.selectedTargetId?.let { // if target is selected, reposition line
             selectedTargetId = controller.selectedTargetId!!
-            selectedTargetState = controller.getTargetState(selectedTargetId)!!
+            selectedTarget = controller.getTarget(selectedTargetId)!!
 
-            val normalizedValue = (selectedTargetState.floatValue - controller.behaviour.range.start) / (controller.behaviour.range.endInclusive - controller.behaviour.range.start)
+            val normalizedValue = (selectedTarget.state.floatValue - selectedTarget.behaviour.range.start) / (selectedTarget.behaviour.range.endInclusive - selectedTarget.behaviour.range.start)
             val dimensionPx = if (controller.style.scrollerDirection in listOf(ScrollerDirection.HorizontalLeft, ScrollerDirection.HorizontalRight)) {
                 scrollerWidthPx // confine scroller line within scroller WIDTH
             } else {
@@ -216,11 +247,11 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
             scrollerHeightPx // confine scroller line within scroller HEIGHT
         }
 
-        lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (controller.behaviour.lineSpeed / 8)))
+        lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (controller.scrollerBehaviour.lineSpeed / 8)))
             .coerceIn(-dimensionPx / 2, dimensionPx / 2) // confine line within dimension selected
     }
 
-    if (controller.behaviour.syncLinePosWithNumber) repositionLineByNumber()
+    if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
     else repositionLineByDrag(0f)
 
     val updateNumber: (Float) -> Unit = { totalDrag ->
@@ -252,16 +283,16 @@ fun ScrollerBox(
                     ScrollerDirection.HorizontalRight, ScrollerDirection.HorizontalLeft -> {
                         detectHorizontalDragGestures(
                             onDragEnd = {
-                                if (!controller.behaviour.syncLinePosWithNumber) lineOffset.value = 0f
+                                if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
                                 controller.triggerDragEnd()
                             }
                         ) { _, dragAmount ->
                             totalDrag += dragAmount // calculate total drag distance
-                            if (totalDrag <= -controller.behaviour.scrollDistanceFactor || totalDrag >= controller.behaviour.scrollDistanceFactor) {
+                            if (totalDrag <= -controller.scrollerBehaviour.scrollDistanceFactor || totalDrag >= controller.scrollerBehaviour.scrollDistanceFactor) {
                                 updateNumber(totalDrag)
                                 totalDrag = 0f
                             }
-                            if (controller.behaviour.syncLinePosWithNumber) repositionLineByNumber()
+                            if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
                             else repositionLineByDrag(dragAmount)
                         }
                     }
@@ -269,16 +300,16 @@ fun ScrollerBox(
                     ScrollerDirection.VerticalUp, ScrollerDirection.VerticalDown -> {
                         detectVerticalDragGestures(
                             onDragEnd = {
-                                if (!controller.behaviour.syncLinePosWithNumber) lineOffset.value = 0f
+                                if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
                                 controller.triggerDragEnd()
                             }
                         ) { _, dragAmount ->
                             totalDrag += dragAmount // calculate total drag distance
-                            if (totalDrag <= -controller.behaviour.scrollDistanceFactor || totalDrag >= controller.behaviour.scrollDistanceFactor) {
+                            if (totalDrag <= -controller.scrollerBehaviour.scrollDistanceFactor || totalDrag >= controller.scrollerBehaviour.scrollDistanceFactor) {
                                 updateNumber(totalDrag)
                                 totalDrag = 0f
                             }
-                            if (controller.behaviour.syncLinePosWithNumber) repositionLineByNumber()
+                            if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
                             else repositionLineByDrag(dragAmount)
                         }
                     }

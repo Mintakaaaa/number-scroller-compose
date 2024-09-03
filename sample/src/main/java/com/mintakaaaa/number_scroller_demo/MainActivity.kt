@@ -28,6 +28,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mintakaaaa.number_scroller.DetachedNumberScroller
+import com.mintakaaaa.number_scroller.DetachedScrollerBehaviour
 import com.mintakaaaa.number_scroller.DetachedScrollerStyle
 import com.mintakaaaa.number_scroller.NumberPosition
 import com.mintakaaaa.number_scroller.NumberScroller
@@ -36,14 +37,15 @@ import com.mintakaaaa.number_scroller.ScrollerController
 import com.mintakaaaa.number_scroller.ScrollerDirection
 import com.mintakaaaa.number_scroller.ScrollerStyle
 import com.mintakaaaa.number_scroller.ScrollerTarget
+import com.mintakaaaa.number_scroller.TargetBehaviour
 import com.mintakaaaa.number_scroller.TargetStyle
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NumberScrollerSample()
-//            DetachedScrollerSample()
+//            NumberScrollerSample()
+            DetachedScrollerSample()
         }
     }
 }
@@ -91,7 +93,7 @@ fun DetachedScrollerSample() {
         Text(text = "Custom", fontSize = 30.sp)
         HorizontalDivider()
 
-        DetachedOne() // SCROLLER
+        DetachedCustom() // SCROLLER
 
         Spacer(Modifier.weight(1f))
     }
@@ -99,6 +101,7 @@ fun DetachedScrollerSample() {
 
 @Composable
 fun DetachedDefault() {
+    // controller uses default styles & behaviours for scroller and its targets
     val controller = remember { ScrollerController() }
 
     // set up your scroller targets however you like, providing them with a unique ID
@@ -129,9 +132,9 @@ fun DetachedDefault() {
 }
 
 @Composable
-fun DetachedOne() {
-    // optional style, targetStyle, and behaviour parameters...
-    val style = DetachedScrollerStyle(
+fun DetachedCustom() {
+    // optional scroller & target styles
+    val detachedStyle = DetachedScrollerStyle(
         scrollerWidth = 300.dp,
         scrollerHeight = 20.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -148,13 +151,31 @@ fun DetachedOne() {
         background = MaterialTheme.colorScheme.primaryContainer,
         selectedBackground = MaterialTheme.colorScheme.tertiaryContainer,
         boxRounding = RoundedCornerShape(6.dp),
+        boxWidth = 60.dp,
+        boxHeight = 40.dp
     )
-    val behaviour = ScrollerBehaviour(
+    // optional scroller & target behaviour parameters
+    val scrollerBehaviour = DetachedScrollerBehaviour(
         syncLinePosWithNumber = false,
         lineSpeed = 6f,
     )
+    val targetOneBehaviour = TargetBehaviour(
+        step = 2f,
+        startNumber = 2f,
+        range = 0f..20f
+    )
+    val targetTwoBehaviour = TargetBehaviour(
+        step = 0.5f,
+        startNumber = -5f,
+        range = -10f..-5f
+    )
+    val defaultTargetBehaviour = TargetBehaviour(
+        step = 1f,
+        startNumber = 0f,
+        range = -5f..5f
+    )
     // ...are supplied to scroller controller
-    val controller = remember { ScrollerController(style = style, targetStyle = targetStyle, behaviour = behaviour) }
+    val controller = remember { ScrollerController(style = detachedStyle, targetStyle = targetStyle, scrollerBehaviour = scrollerBehaviour, defaultTargetBehaviour = defaultTargetBehaviour) }
 
     // updating text based on which target is updated
     var text by remember { mutableStateOf("Scroll me!") }
@@ -166,19 +187,28 @@ fun DetachedOne() {
 
     // set up your scroller targets however you like, providing them with a unique ID
     Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
-
-        ScrollerTarget(controller = controller, id = 1, onDragEnd = { number ->
+        ScrollerTarget(controller = controller, targetBehaviour = targetOneBehaviour, id = 1, onDragEnd = { number ->
             updateText(1, number)
         })
         Spacer(Modifier.width(10.dp))
-        ScrollerTarget(controller = controller, id = 2, onDragEnd = { number ->
+        ScrollerTarget(controller = controller, targetBehaviour = targetTwoBehaviour, id = 2, onDragEnd = { number ->
             updateText(2, number)
         })
         Spacer(Modifier.width(10.dp))
+        // note below targets don't have targetBehaviour param... using default target behaviour...
         ScrollerTarget(controller = controller, id = 3, onDragEnd = { number ->
             updateText(3, number)
         })
-        Spacer(Modifier.width(10.dp))
+    }
+
+    Spacer(Modifier.height(10.dp))
+    // place your detached scroller anywhere on the screen
+    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
+        DetachedNumberScroller(controller = controller, linkedTo = listOf(1, 2, 3, 4, 5, 6))
+    }
+    Spacer(Modifier.height(10.dp))
+
+    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
         ScrollerTarget(controller = controller, id = 4, onDragEnd = { number ->
             updateText(4, number)
         })
@@ -190,12 +220,6 @@ fun DetachedOne() {
         ScrollerTarget(controller = controller, id = 6, onDragEnd = { number ->
             updateText(6, number)
         })
-
-    }
-    Spacer(Modifier.height(10.dp))
-    // place your detached scroller anywhere on the screen
-    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
-        DetachedNumberScroller(controller = controller, linkedTo = listOf(1, 2, 3, 4, 5, 6))
     }
 }
 
