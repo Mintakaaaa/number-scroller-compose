@@ -28,7 +28,7 @@ dependencyResolutionManagement {
 2. Add the dependency
 ```
 dependencies {
-  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.1.1'
+  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.1.2'
 }
 ```
 ## Maven
@@ -46,7 +46,7 @@ dependencies {
 <dependency>
   <groupId>com.github.Mintakaaaa</groupId>
   <artifactId>number-scroller-compose</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2</version>
 </dependency>
 ```
 ## Sbt
@@ -58,7 +58,7 @@ resolvers += "jitpack" at "https://jitpack.io"
 ```
 2. Add the dependency
 ```
-libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.1.1"	
+libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.1.2"	
 ```
 ## Leiningen
 1. Add the JitPack repository to your build file
@@ -69,7 +69,7 @@ libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.
 ```
 2. Add the dependency
 ```
-:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.1.1"]]
+:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.1.2"]]
 ```
 
 # Using The Number Scroller
@@ -225,21 +225,23 @@ val customTargetStyle = TargetStyle(
 )
 
 val customScrollerBehaviour = ScrollerBehaviour(
-    scrollDistanceFactor = 25f,
     lineSpeed = 2f,
-    syncLinePosWithNumber = false
+    syncLinePosWithNumber = false,
+    incrementDirection: IncrementDirection = IncrementDirection.Down,
 )
 
 val customTargetBehaviour = TargetBehaviour(
     step = 2f,
     startNumber = 56f,
-    range = 50f..150f
+    range = 50f..150f,
+    scrollDistanceFactor = 220f
 )
 
 val targetOneBehaviour = TargetBehaviour(
     step = 4f,
     startNumber = 14f,
-    range = 10f..30f
+    range = 10f..30f,
+    scrollDistanceFactor = 20f
 )
 
 val controller = remember { ScrollerController(
@@ -284,11 +286,12 @@ Defines the styling options for the `DetachedNumberScroller`.
 
 Defines the behaviour options for the `ScrollerTarget`.
 
-| Parameter       | Type                              | Description                                                                          | Default Value |
-|-----------------|-----------------------------------|--------------------------------------------------------------------------------------|---------------|
-| **startNumber** | `Float`                           | The initial value of the number displayed by the scroller.                           | `0f`          |
-| **step**        | `Float`                           | The amount by which the number is incremented or decremented with each drag gesture. | `1f`          |
-| **range**       | `ClosedFloatingPointRange<Float>` | The range of values that the number can be set to.                                   | `-10f..10f`   |
+| Parameter                 | Type                              | Description                                                                          | Default Value |
+|---------------------------|-----------------------------------|--------------------------------------------------------------------------------------|---------------|
+| **startNumber**           | `Float`                           | The initial value of the number displayed by the scroller.                           | `0f`          |
+| **step**                  | `Float`                           | The amount by which the number is incremented or decremented with each drag gesture. | `1f`          |
+| **range**                 | `ClosedFloatingPointRange<Float>` | The range of values that the number can be set to.                                   | `-10f..10f`   |
+| **scrollDistanceFactor**  | `Float`                           | The distance the user must drag to trigger a number change.                          | `100f`        |
 
 ### DetachedScrollerBehaviour
 
@@ -296,7 +299,6 @@ Defines the behaviour options for the `DetachedNumberScroller`.
 
 | Parameter                 | Type                 | Description                                                                     | Default Value           |
 |---------------------------|----------------------|---------------------------------------------------------------------------------|-------------------------|
-| **scrollDistanceFactor**  | `Float`              | The distance the user must drag to trigger a number change.                     | `100f`                  |
 | **lineSpeed**             | `Float`              | The speed factor for scrolling line movement.                                   | `1.5f`                  |
 | **syncLinePosWithNumber** | `Boolean`            | Whether to synchronize the position of the scroller line with the number value. | `true`                  |
 | **incrementDirection**    | `IncrementDirection` | The direction in which the scroller increments.                                 | `IncrementDirection.Up` |
@@ -350,4 +352,4 @@ Displays the `ScrollerTarget` UI component.
 
 # Miscellaneous
 
-1. `lineSpeed` is irrelevant when `syncLinePosWithNumber = true` as the line snaps to the correct position dictated by the selected number and the range.
+1. `lineSpeed` is irrelevant for both scroller types when `syncLinePosWithNumber = true` as the line snaps to the correct position dictated by the selected number and the range.
