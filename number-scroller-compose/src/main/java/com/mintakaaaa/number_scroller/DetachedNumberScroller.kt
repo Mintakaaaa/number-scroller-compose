@@ -63,22 +63,22 @@ data class DetachedScrollerStyle(
  * @property startNumber The initial value of the number displayed by the scroller. Default is 0f.
  * @property step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
  * @property range The range of values that the number can be set to. Default is -10f to 10f.
+ * @property scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
  */
 data class TargetBehaviour(
     val startNumber: Float = 0f,
     val step: Float = 1f,
     val range: ClosedFloatingPointRange<Float> = -10f..10f,
+    val scrollDistanceFactor: Float = 100f,
 )
 
 /**
  * Data class representing the behaviour options for the [DetachedNumberScroller] component.
- * @property scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
  * @property lineSpeed The speed factor for scrolling line movement. Default is 1.5f.
  * @property syncLinePosWithNumber Whether to synchronize the position of the scroller line with the number value. Default is true.
  * @property incrementDirection The direction in which the scroller increments. Default is [IncrementDirection.Up].
  */
 data class DetachedScrollerBehaviour(
-    val scrollDistanceFactor: Float = 100f,
     val lineSpeed: Float = 1.5f,
     val syncLinePosWithNumber: Boolean = true,
     val incrementDirection: IncrementDirection = IncrementDirection.Up,
@@ -150,7 +150,7 @@ class ScrollerController(
             targets[id]?.let { target ->
                 target.state.floatValue = when (scrollerBehaviour.incrementDirection) {
                     IncrementDirection.Up, IncrementDirection.Left -> {
-                        if (totalDrag <= -scrollerBehaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                        if (totalDrag <= -target.behaviour.scrollDistanceFactor) { // dragging up/left past threshold
                             (target.state.floatValue + target.behaviour.step).coerceAtMost(target.behaviour.range.endInclusive)
                         } else { // dragging down/right past threshold
                             (target.state.floatValue - target.behaviour.step).coerceAtLeast(target.behaviour.range.start)
@@ -158,7 +158,7 @@ class ScrollerController(
                     }
 
                     IncrementDirection.Down, IncrementDirection.Right -> {
-                        if (totalDrag <= -scrollerBehaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                        if (totalDrag <= -target.behaviour.scrollDistanceFactor) { // dragging up/left past threshold
                             (target.state.floatValue - target.behaviour.step).coerceAtLeast(target.behaviour.range.start)
                         } else { // dragging down/right past threshold
                             (target.state.floatValue + target.behaviour.step).coerceAtMost(target.behaviour.range.endInclusive)
@@ -271,17 +271,12 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
     if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
     else repositionLineByDrag(0f)
 
-    val updateNumber: (Float) -> Unit = { totalDrag ->
-        controller.updateSelectedTarget(totalDrag)
-    }
-
-    ScrollerBox(updateNumber, repositionLineByDrag, repositionLineByNumber, lineOffset, controller)
+    ScrollerBox(repositionLineByDrag, repositionLineByNumber, lineOffset, controller)
 }
 
 /**
  * Composable function that displays the scroller box with a draggable line.
  *
- * @param updateNumber Function to update the number based on drag amount.
  * @param repositionLineByDrag A function to reposition the scroller line based on drag amount.
  * @param repositionLineByNumber A function to reposition the scroller line based on the current number value.
  * @param lineOffset The current offset of the scroller line.
@@ -289,7 +284,6 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
  */
 @Composable
 fun ScrollerBox(
-    updateNumber: (Float) -> Unit,
     repositionLineByDrag: (Float) -> Unit,
     repositionLineByNumber: () -> Unit,
     lineOffset: MutableState<Float>,
@@ -313,12 +307,17 @@ fun ScrollerBox(
                             }
                         ) { _, dragAmount ->
                             totalDrag += dragAmount // calculate total drag distance
-                            if (totalDrag <= -controller.scrollerBehaviour.scrollDistanceFactor || totalDrag >= controller.scrollerBehaviour.scrollDistanceFactor) {
-                                updateNumber(totalDrag)
-                                totalDrag = 0f
+                            controller.selectedTargetId?.let { // if target is selected
+                                val targetScrollDistanceFactor = controller.getTarget(it)!!.behaviour.scrollDistanceFactor
+
+                                if (totalDrag <= -targetScrollDistanceFactor || totalDrag >= targetScrollDistanceFactor) {
+                                    controller.updateSelectedTarget(totalDrag) // update number
+                                    totalDrag = 0f
+                                }
+                                if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
+                                else repositionLineByDrag(dragAmount)
                             }
-                            if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
-                            else repositionLineByDrag(dragAmount)
+
                         }
                     }
 
@@ -330,12 +329,16 @@ fun ScrollerBox(
                             }
                         ) { _, dragAmount ->
                             totalDrag += dragAmount // calculate total drag distance
-                            if (totalDrag <= -controller.scrollerBehaviour.scrollDistanceFactor || totalDrag >= controller.scrollerBehaviour.scrollDistanceFactor) {
-                                updateNumber(totalDrag)
-                                totalDrag = 0f
+                            controller.selectedTargetId?.let { // if target is selected
+                                val targetScrollDistanceFactor = controller.getTarget(it)!!.behaviour.scrollDistanceFactor
+
+                                if (totalDrag <= -targetScrollDistanceFactor || totalDrag >= targetScrollDistanceFactor) {
+                                    controller.updateSelectedTarget(totalDrag) // update number
+                                    totalDrag = 0f
+                                }
+                                if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
+                                else repositionLineByDrag(dragAmount)
                             }
-                            if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
-                            else repositionLineByDrag(dragAmount)
                         }
                     }
                 }
@@ -388,3 +391,5 @@ fun NumberText(targetStyle: TargetStyle, step: Float, number: Float) {
         textAlign = TextAlign.Center,
     )
 }
+
+// NOTE: NEED TO REMOVE PARAM updateNumber from readme as its gone now

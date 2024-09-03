@@ -44,8 +44,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NumberScrollerSample()
-//            DetachedScrollerSample()
+//            NumberScrollerSample()
+            DetachedScrollerSample()
         }
     }
 }
@@ -162,17 +162,20 @@ fun DetachedCustom() {
     val targetOneBehaviour = TargetBehaviour(
         step = 2f,
         startNumber = 2f,
-        range = 0f..20f
+        range = 0f..20f,
+        scrollDistanceFactor = 20f
     )
     val targetTwoBehaviour = TargetBehaviour(
         step = 0.5f,
         startNumber = -5f,
-        range = -10f..-5f
+        range = -10f..-5f,
+        scrollDistanceFactor = 300f
     )
     val defaultTargetBehaviour = TargetBehaviour(
         step = 1f,
         startNumber = 0f,
-        range = -5f..5f
+        range = -5f..5f,
+        scrollDistanceFactor = 100f
     )
     // ...are supplied to scroller controller
     val controller = remember { ScrollerController(scrollerStyle = detachedStyle, targetStyle = targetStyle, scrollerBehaviour = scrollerBehaviour, defaultTargetBehaviour = defaultTargetBehaviour) }
