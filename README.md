@@ -123,34 +123,34 @@ NumberScroller(
 
 Defines the styling options for the `NumberScroller`.
 
-| Parameter                    | Type                 | Description                                                  | Default Value                  |
-|------------------------------|----------------------|--------------------------------------------------------------|--------------------------------|
-| **scrollerHeight**           | `Dp`                 | The height of the scroller.                                  | `60.dp`                        |
-| **scrollerWidth**            | `Dp`                 | The width of the scroller.                                   | `40.dp`                        |
-| **scrollerColor**            | `Color`              | The background color of the scroller.                        | `Color.DarkGray`               |
-| **lineColor**                | `Color`              | The color of the scroller line.                              | `Color.Gray`                   |
-| **numberColor**              | `Color`              | The color of the number text.                                | `Color.Black`                  |
-| **scrollerRounding**         | `RoundedCornerShape` | The shape of the corners of the scroller.                    | `RoundedCornerShape(6.dp)`     |
-| **lineRounding**             | `RoundedCornerShape` | The shape of the corners of the scroller line.               | `RoundedCornerShape(4.dp)`     |
-| **lineThickness**            | `Dp`                 | The thickness of the scroller line.                          | `4.dp`                         |
-| **lineWidthFactor**          | `Float`              | The proportion of the scroller width that the line occupies. | `0.8f`                         |
-| **numberFontSize**           | `TextUnit`           | The font size of the number text.                            | `30.sp`                        |
-| **numberDistanceToScroller** | `Dp`                 | The distance between the number text and the scroller.       | `30.dp`                        |
-| **numberPosition**           | `NumberPosition`     | The position of the number relative to the scroller.         | `NumberPosition.Left`          |
-| **scrollerDirection**        | `ScrollerDirection`  | The direction in which the scroller operates.                | `ScrollerDirection.VerticalUp` |
+| Parameter                    | Type                  | Description                                                  | Default Value              |
+|------------------------------|-----------------------|--------------------------------------------------------------|----------------------------|
+| **scrollerHeight**           | `Dp`                  | The height of the scroller.                                  | `60.dp`                    |
+| **scrollerWidth**            | `Dp`                  | The width of the scroller.                                   | `40.dp`                    |
+| **scrollerColor**            | `Color`               | The background color of the scroller.                        | `Color.DarkGray`           |
+| **lineColor**                | `Color`               | The color of the scroller line.                              | `Color.Gray`               |
+| **numberColor**              | `Color`               | The color of the number text.                                | `Color.Black`              |
+| **scrollerRounding**         | `RoundedCornerShape`  | The shape of the corners of the scroller.                    | `RoundedCornerShape(6.dp)` |
+| **lineRounding**             | `RoundedCornerShape`  | The shape of the corners of the scroller line.               | `RoundedCornerShape(4.dp)` |
+| **lineThickness**            | `Dp`                  | The thickness of the scroller line.                          | `4.dp`                     |
+| **lineWidthFactor**          | `Float`               | The proportion of the scroller width that the line occupies. | `0.8f`                     |
+| **numberFontSize**           | `TextUnit`            | The font size of the number text.                            | `30.sp`                    |
+| **numberDistanceToScroller** | `Dp`                  | The distance between the number text and the scroller.       | `30.dp`                    |
+| **numberPosition**           | `NumberPosition`      | The position of the number relative to the scroller.         | `NumberPosition.Left`      |
 
 ### ScrollerBehaviour
 
 Defines the behaviour options for the `NumberScroller`.
 
-| Parameter                 | Type                              | Description                                                                          | Default Value |
-|---------------------------|-----------------------------------|--------------------------------------------------------------------------------------|---------------|
-| **startNumber**           | `Float`                           | The initial value of the number displayed by the scroller.                           | `0f`          |
-| **step**                  | `Float`                           | The amount by which the number is incremented or decremented with each drag gesture. | `1f`          |
-| **range**                 | `ClosedFloatingPointRange<Float>` | The range of values that the number can be set to.                                   | `-10f..10f`   |
-| **scrollDistanceFactor**  | `Float`                           | The distance the user must drag to trigger a number change.                          | `100f`        |
-| **lineSpeed**             | `Float`                           | The speed factor for scrolling line movement.                                        | `1.5f`        |
-| **syncLinePosWithNumber** | `Boolean`                         | Whether to synchronize the position of the scroller line with the number value.      | `true`        |
+| Parameter                 | Type                              | Description                                                                          | Default Value           |
+|---------------------------|-----------------------------------|--------------------------------------------------------------------------------------|-------------------------|
+| **startNumber**           | `Float`                           | The initial value of the number displayed by the scroller.                           | `0f`                    |
+| **step**                  | `Float`                           | The amount by which the number is incremented or decremented with each drag gesture. | `1f`                    |
+| **range**                 | `ClosedFloatingPointRange<Float>` | The range of values that the number can be set to.                                   | `-10f..10f`             |
+| **scrollDistanceFactor**  | `Float`                           | The distance the user must drag to trigger a number change.                          | `100f`                  |
+| **lineSpeed**             | `Float`                           | The speed factor for scrolling line movement.                                        | `1.5f`                  |
+| **syncLinePosWithNumber** | `Boolean`                         | Whether to synchronize the position of the scroller line with the number value.      | `true`                  |
+| **incrementDirection**    | `IncrementDirection`              | The direction in which the scroller increments.                                      | `IncrementDirection.Up` |
 
 ## Enums
 
@@ -269,17 +269,16 @@ DetachedNumberScroller(
 
 Defines the styling options for the `DetachedNumberScroller`.
 
-| Parameter             | Type                 | Description                                                  | Default Value                  |
-|-----------------------|----------------------|--------------------------------------------------------------|--------------------------------|
-| **scrollerHeight**    | `Dp`                 | The height of the scroller.                                  | `60.dp`                        |
-| **scrollerWidth**     | `Dp`                 | The width of the scroller.                                   | `40.dp`                        |
-| **scrollerColor**     | `Color`              | The background color of the scroller.                        | `Color.DarkGray`               |
-| **lineColor**         | `Color`              | The color of the scroller line.                              | `Color.Gray`                   |
-| **scrollerRounding**  | `RoundedCornerShape` | The shape of the corners of the scroller.                    | `RoundedCornerShape(6.dp)`     |
-| **lineRounding**      | `RoundedCornerShape` | The shape of the corners of the scroller line.               | `RoundedCornerShape(4.dp)`     |
-| **lineThickness**     | `Dp`                 | The thickness of the scroller line.                          | `4.dp`                         |
-| **lineWidthFactor**   | `Float`              | The proportion of the scroller width that the line occupies. | `0.8f`                         |
-| **scrollerDirection** | `ScrollerDirection`  | The direction in which the scroller operates.                | `ScrollerDirection.VerticalUp` |
+| Parameter              | Type                 | Description                                                  | Default Value              |
+|------------------------|----------------------|--------------------------------------------------------------|----------------------------|
+| **scrollerHeight**     | `Dp`                 | The height of the scroller.                                  | `60.dp`                    |
+| **scrollerWidth**      | `Dp`                 | The width of the scroller.                                   | `40.dp`                    |
+| **scrollerColor**      | `Color`              | The background color of the scroller.                        | `Color.DarkGray`           |
+| **lineColor**          | `Color`              | The color of the scroller line.                              | `Color.Gray`               |
+| **scrollerRounding**   | `RoundedCornerShape` | The shape of the corners of the scroller.                    | `RoundedCornerShape(6.dp)` |
+| **lineRounding**       | `RoundedCornerShape` | The shape of the corners of the scroller line.               | `RoundedCornerShape(4.dp)` |
+| **lineThickness**      | `Dp`                 | The thickness of the scroller line.                          | `4.dp`                     |
+| **lineWidthFactor**    | `Float`              | The proportion of the scroller width that the line occupies. | `0.8f`                     |
 
 ### TargetBehaviour
 
@@ -295,11 +294,12 @@ Defines the behaviour options for the `ScrollerTarget`.
 
 Defines the behaviour options for the `DetachedNumberScroller`.
 
-| Parameter                 | Type      | Description                                                                     | Default Value |
-|---------------------------|-----------|---------------------------------------------------------------------------------|---------------|
-| **scrollDistanceFactor**  | `Float`   | The distance the user must drag to trigger a number change.                     | `100f`        |
-| **lineSpeed**             | `Float`   | The speed factor for scrolling line movement.                                   | `1.5f`        |
-| **syncLinePosWithNumber** | `Boolean` | Whether to synchronize the position of the scroller line with the number value. | `true`        |
+| Parameter                 | Type                 | Description                                                                     | Default Value           |
+|---------------------------|----------------------|---------------------------------------------------------------------------------|-------------------------|
+| **scrollDistanceFactor**  | `Float`              | The distance the user must drag to trigger a number change.                     | `100f`                  |
+| **lineSpeed**             | `Float`              | The speed factor for scrolling line movement.                                   | `1.5f`                  |
+| **syncLinePosWithNumber** | `Boolean`            | Whether to synchronize the position of the scroller line with the number value. | `true`                  |
+| **incrementDirection**    | `IncrementDirection` | The direction in which the scroller increments.                                 | `IncrementDirection.Up` |
 
 ### TargetStyle
 
@@ -335,6 +335,17 @@ Displays the `DetachedNumberScroller` UI component.
 |----------------|----------------------|-------------------------------------------------------|---------------|
 | **controller** | `ScrollerController` | The controller managing the scroller and its targets. | None          |
 | **linkedTo**   | `List<Int>`          | A list of target IDs to link the scroller to.         | Empty list    |
+
+## ScrollerTarget Composable Function
+
+Displays the `ScrollerTarget` UI component.
+
+| Parameter           | Type                 | Description                                                                                                | Default Value  |
+|---------------------|----------------------|------------------------------------------------------------------------------------------------------------|----------------|
+| **controller**      | `ScrollerController` | The controller managing the scroller and its targets.                                                      | None           |
+| **targetBehaviour** | `TargetBehaviour?`   | The behaviour options specific to this target. If null, the default behaviour from the controller is used. | `null`         |
+| **id**              | `Int`                | The unique identifier for this target.                                                                     | None           |
+| **onDragEnd**       | `(Float) -> Unit`    | Callback function called when the drag operation ends, with the current number as the parameter.           | Empty function |
 
 
 # Miscellaneous
