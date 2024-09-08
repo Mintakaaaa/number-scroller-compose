@@ -2,14 +2,14 @@
 
 The `NumberScroller` component is a customisable UI element that allows users to scroll a number (decimals supported) through a specified range using up/down and left/right drag gestures. 
 
-The `DetachedNumberScroller` component is the almost the same, but instead supports more than one scrollable number. 
+The `DetachedNumberScroller` component is a more advanced variation of the `NumberScroller` with more customisation options support for more than one scrollable number. 
 
 [![](https://jitpack.io/v/Mintakaaaa/number-scroller-compose.svg)](https://jitpack.io/#Mintakaaaa/number-scroller-compose)
 
 # Demo
 
 ![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/number-scroller-demo-1.1.1.gif "Scroller Demo")
-![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.1.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.3.gif "Scroller Demo")
 
 # Installation
 ## Gradle
@@ -28,7 +28,7 @@ dependencyResolutionManagement {
 2. Add the dependency
 ```
 dependencies {
-  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.1.2'
+  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.1.3'
 }
 ```
 ## Maven
@@ -46,7 +46,7 @@ dependencies {
 <dependency>
   <groupId>com.github.Mintakaaaa</groupId>
   <artifactId>number-scroller-compose</artifactId>
-  <version>1.1.2</version>
+  <version>1.1.3</version>
 </dependency>
 ```
 ## Sbt
@@ -58,7 +58,7 @@ resolvers += "jitpack" at "https://jitpack.io"
 ```
 2. Add the dependency
 ```
-libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.1.2"	
+libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.1.3"	
 ```
 ## Leiningen
 1. Add the JitPack repository to your build file
@@ -69,7 +69,7 @@ libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.
 ```
 2. Add the dependency
 ```
-:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.1.2"]]
+:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.1.3"]]
 ```
 
 # Using The Number Scroller
@@ -241,8 +241,21 @@ val targetOneBehaviour = TargetBehaviour(
     step = 4f,
     startNumber = 14f,
     range = 10f..30f,
-    scrollDistanceFactor = 20f
+    scrollDistanceFactor = 20f,
+    autoIncrementOnFarScroll = true,
+    autoIncrementDelay = 400,
+    farScrollThreshold = 0.9f
 )
+
+val targetTwoBehaviour = TargetBehaviour(
+    step = 2f,
+    startNumber = 10f,
+    range = -50f..50f,
+    scrollDistanceFactor = 50f,
+    useDynamicDistanceFactor = true,
+    dynamicDistanceScalingFactor = 8f,
+)
+
 
 val controller = remember { ScrollerController(
     scrollerStyle = customScrollerStyle,
@@ -254,7 +267,7 @@ val controller = remember { ScrollerController(
 ScrollerTarget(controller = controller, targetBehaviour = targetOneBehaviour, id = 1, onDragEnd = { number ->
     // Do whatever you want with the resulting number upon scroll finish
 })
-ScrollerTarget(controller = controller, id = 2) // this uses default target behaviour & does not return number
+ScrollerTarget(controller = controller, targetBehaviour = targetTwoBehaviour, id = 2)
 ScrollerTarget(controller = controller, id = 3) // this uses default target behaviour & does not return number
 
 DetachedNumberScroller(
@@ -284,14 +297,22 @@ Defines the styling options for the `DetachedNumberScroller`.
 
 ### TargetBehaviour
 
-Defines the behaviour options for the `ScrollerTarget`.
+## TargetBehaviour Data Class
 
-| Parameter                 | Type                              | Description                                                                          | Default Value |
-|---------------------------|-----------------------------------|--------------------------------------------------------------------------------------|---------------|
-| **startNumber**           | `Float`                           | The initial value of the number displayed by the scroller.                           | `0f`          |
-| **step**                  | `Float`                           | The amount by which the number is incremented or decremented with each drag gesture. | `1f`          |
-| **range**                 | `ClosedFloatingPointRange<Float>` | The range of values that the number can be set to.                                   | `-10f..10f`   |
-| **scrollDistanceFactor**  | `Float`                           | The distance the user must drag to trigger a number change.                          | `100f`        |
+Represents the behaviour options for the `ScrollerTarget`.
+
+| Property                         | Type                              | Description                                                                                                           | Default Value |
+|----------------------------------|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------|---------------|
+| **startNumber**                  | `Float`                           | The initial value of the number displayed by the scroller.                                                            | `0f`          |
+| **step**                         | `Float`                           | The amount by which the number is incremented or decremented with each drag gesture.                                  | `1f`          |
+| **range**                        | `ClosedFloatingPointRange<Float>` | The range of values that the number can be set to.                                                                    | `-10f..10f`   |
+| **scrollDistanceFactor**         | `Float`                           | The distance the user must drag to trigger a number change.                                                           | `100f`        |
+| **useDynamicDistanceFactor**     | `Boolean`                         | Whether to apply a dynamic scroll distance factor that speeds up incrementing/decrementing of selected target number. | `false`       |
+| **dynamicDistanceScalingFactor** | `Float`                           | The factor by which to speed up the incrementing/decrementing of selected target number.                              | `4f`          |
+| **autoIncrementOnFarScroll**     | `Boolean`                         | Whether to increment the selected target automatically once a threshold is passed.                                    | `true`        |
+| **farScrollThreshold**           | `Float`                           | The threshold that must be passed to activate auto incrementation of the selected target.                             | `0.99f`       |
+| **autoIncrementDelay**           | `Int`                             | The delay between automatic incrementing/decrementing of the selected target number.                                  | `100`         |
+
 
 ### DetachedScrollerBehaviour
 
@@ -353,3 +374,4 @@ Displays the `ScrollerTarget` UI component.
 # Miscellaneous
 
 1. `lineSpeed` is irrelevant for both scroller types when `syncLinePosWithNumber = true` as the line snaps to the correct position dictated by the selected number and the range.
+2. `syncLinePosWithNumber` and `autoIncrementOnFarScroll` cannot be true simultaneously.
