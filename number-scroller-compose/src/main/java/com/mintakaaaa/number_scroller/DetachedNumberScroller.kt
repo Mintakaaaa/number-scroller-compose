@@ -18,6 +18,7 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 /**
  * Data class representing the styling options for the [DetachedNumberScroller] component.
@@ -64,12 +66,22 @@ data class DetachedScrollerStyle(
  * @property step The amount by which the number is incremented or decremented with each drag gesture. Default is 1f.
  * @property range The range of values that the number can be set to. Default is -10f to 10f.
  * @property scrollDistanceFactor The distance the user must drag to trigger a number change. Default is 100f.
+ * @property useDynamicDistanceFactor Whether to apply a dynamic scroll distance factor that speeds up incrementing/decrementing of selected target number. Default is false.
+ * @property dynamicDistanceScalingFactor The factor by which to speed up the incrementing/decrementing of selected target number. Default is 4f.
+ * @property autoIncrementOnFarScroll Whether to increment the selected target automatically once a threshold is passed. Default is true.
+ * @property farScrollThreshold The threshold that must be passed to activate auto incrementation of selected target. Default is 0.99f.
+ * @property autoIncrementDelay The delay between automatic incrementing/decrementing of the selected target number. Default is 100.
  */
 data class TargetBehaviour(
     val startNumber: Float = 0f,
     val step: Float = 1f,
     val range: ClosedFloatingPointRange<Float> = -10f..10f,
     val scrollDistanceFactor: Float = 100f,
+    val useDynamicDistanceFactor: Boolean = false,
+    val dynamicDistanceScalingFactor: Float = 4f,
+    val autoIncrementOnFarScroll: Boolean = false,
+    val farScrollThreshold: Float = 0.99f,
+    val autoIncrementDelay: Long = 100,
 )
 
 /**
@@ -145,12 +157,14 @@ class ScrollerController(
         }
     }
 
-    fun updateSelectedTarget(totalDrag: Float) { // update selected target number based on scroll
+    fun updateSelectedTarget(totalDrag: Float, scrollFactorMultiplier: Float) { // update selected target number based on scroll
         selectedTargetId?.let { id ->
             targets[id]?.let { target ->
+                println("total drag: $totalDrag")
+
                 target.state.floatValue = when (scrollerBehaviour.incrementDirection) {
                     IncrementDirection.Up, IncrementDirection.Left -> {
-                        if (totalDrag <= -target.behaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                        if (totalDrag <= -target.behaviour.scrollDistanceFactor * scrollFactorMultiplier) { // dragging up/left past threshold
                             (target.state.floatValue + target.behaviour.step).coerceAtMost(target.behaviour.range.endInclusive)
                         } else { // dragging down/right past threshold
                             (target.state.floatValue - target.behaviour.step).coerceAtLeast(target.behaviour.range.start)
@@ -158,7 +172,7 @@ class ScrollerController(
                     }
 
                     IncrementDirection.Down, IncrementDirection.Right -> {
-                        if (totalDrag <= -target.behaviour.scrollDistanceFactor) { // dragging up/left past threshold
+                        if (totalDrag <= -target.behaviour.scrollDistanceFactor * scrollFactorMultiplier) { // dragging up/left past threshold
                             (target.state.floatValue - target.behaviour.step).coerceAtLeast(target.behaviour.range.start)
                         } else { // dragging down/right past threshold
                             (target.state.floatValue + target.behaviour.step).coerceAtMost(target.behaviour.range.endInclusive)
@@ -190,9 +204,12 @@ class ScrollerController(
  */
 @Composable
 fun ScrollerTarget(controller: ScrollerController, targetBehaviour: TargetBehaviour? = null, id: Int, onDragEnd: (Float) -> Unit = {}) {
-
     // if behaviour for this target is passed, use it, else use default target behaviour
     val effectiveTargetBehaviour = targetBehaviour ?: controller.defaultTargetBehaviour!!
+
+    require(!(effectiveTargetBehaviour.autoIncrementOnFarScroll && controller.scrollerBehaviour.syncLinePosWithNumber)) { "autoIncrementOnFarScroll cannot be true while syncLinePosWithNumber is true" }
+    require(effectiveTargetBehaviour.farScrollThreshold in 0f..0.99f) { "farScrollThreshold must be between 0f and 0.99f" }
+    require(effectiveTargetBehaviour.autoIncrementDelay >= 50) { "autoIncrementDelay must be greater or equal to 50" }
 
     // register target and get its state
     val targetState = remember { controller.registerTarget(id, effectiveTargetBehaviour, onDragEnd) }
@@ -243,11 +260,7 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
             selectedTarget = controller.getTarget(selectedTargetId)!!
 
             val normalizedValue = (selectedTarget.state.floatValue - selectedTarget.behaviour.range.start) / (selectedTarget.behaviour.range.endInclusive - selectedTarget.behaviour.range.start)
-            val dimensionPx = if (controller.scrollerBehaviour.incrementDirection in listOf(IncrementDirection.Left, IncrementDirection.Right)) {
-                scrollerWidthPx // confine scroller line within scroller WIDTH
-            } else {
-                scrollerHeightPx // confine scroller line within scroller HEIGHT
-            }
+            val dimensionPx = getDimensionPx(controller, scrollerWidthPx, scrollerHeightPx)
 
             val offset = (normalizedValue * dimensionPx - dimensionPx / 2)
             lineOffset.floatValue = when (controller.scrollerBehaviour.incrementDirection) {
@@ -258,11 +271,7 @@ fun DetachedNumberScroller(controller: ScrollerController, linkedTo: List<Int>) 
     }
 
     val repositionLineByDrag: (Float) -> Unit = { dragAmount ->
-        val dimensionPx = if (controller.scrollerBehaviour.incrementDirection in listOf(IncrementDirection.Left, IncrementDirection.Right)) {
-            scrollerWidthPx // confine scroller line within scroller WIDTH
-        } else {
-            scrollerHeightPx // confine scroller line within scroller HEIGHT
-        }
+        val dimensionPx = getDimensionPx(controller, scrollerWidthPx, scrollerHeightPx)
 
         lineOffset.floatValue = (lineOffset.floatValue + (dragAmount * (controller.scrollerBehaviour.lineSpeed / 8)))
             .coerceIn(-dimensionPx / 2, dimensionPx / 2) // confine line within dimension selected
@@ -288,8 +297,36 @@ fun ScrollerBox(
     repositionLineByNumber: () -> Unit,
     lineOffset: MutableState<Float>,
     controller: ScrollerController,
-    ) {
+) {
     var totalDrag by remember { mutableFloatStateOf(0f) }
+    var lastDragTime by remember { mutableLongStateOf(0L) }
+    var scrollFactorMultiplier by remember { mutableFloatStateOf(1f) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    val scrollerHeightPx = with(LocalDensity.current) { controller.scrollerStyle.scrollerHeight.toPx() }
+    val scrollerWidthPx = with(LocalDensity.current) { controller.scrollerStyle.scrollerWidth.toPx() }
+
+    if (controller.selectedTargetId?.let { controller.getTarget(it)!!.behaviour.autoIncrementOnFarScroll } == true) {
+        val selectedTarget = controller.getTarget(controller.selectedTargetId!!)!!
+
+        LaunchedEffect(isDragging, selectedTarget) {
+            if (selectedTarget.behaviour.autoIncrementOnFarScroll) {
+                while (isDragging) {
+                    val dimensionPx = getDimensionPx(controller, scrollerWidthPx, scrollerHeightPx) // width or height in PX
+                    val thresholdPx = (dimensionPx / 2 * selectedTarget.behaviour.farScrollThreshold)
+
+                    if (kotlin.math.abs(lineOffset.value) >= thresholdPx) {
+                        val direction = if (lineOffset.value >= thresholdPx) 1 else -1
+                        controller.updateSelectedTarget(
+                            totalDrag = direction * selectedTarget.behaviour.scrollDistanceFactor,
+                            scrollFactorMultiplier = 1f // no dynamic scaling
+                        )
+                    }
+                    delay(selectedTarget.behaviour.autoIncrementDelay)
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -301,39 +338,66 @@ fun ScrollerBox(
                 when (controller.scrollerBehaviour.incrementDirection) {
                     IncrementDirection.Left, IncrementDirection.Right -> {
                         detectHorizontalDragGestures(
+                            onDragStart = { isDragging = true },
                             onDragEnd = {
+                                isDragging = false
                                 if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
                                 controller.triggerDragEnd()
                             }
                         ) { _, dragAmount ->
                             totalDrag += dragAmount // calculate total drag distance
-                            controller.selectedTargetId?.let { // if target is selected
-                                val targetScrollDistanceFactor = controller.getTarget(it)!!.behaviour.scrollDistanceFactor
 
-                                if (totalDrag <= -targetScrollDistanceFactor || totalDrag >= targetScrollDistanceFactor) {
-                                    controller.updateSelectedTarget(totalDrag) // update number
+                            controller.selectedTargetId?.let { id -> // if target is selected
+                                val target = controller.getTarget(id)!!
+
+                                if (target.behaviour.useDynamicDistanceFactor) {
+                                    val currentTime = System.currentTimeMillis()
+                                    val timeElapsed = currentTime - lastDragTime
+                                    lastDragTime = currentTime
+
+                                    // calculate drag velocity (drag amount / time elapsed)
+                                    val velocity = kotlin.math.abs(dragAmount / timeElapsed.coerceAtLeast(1))
+                                    scrollFactorMultiplier = computeScrollFactorMultiplier(velocity, target.behaviour.dynamicDistanceScalingFactor)
+                                }
+
+                                val adjustedFactor = target.behaviour.scrollDistanceFactor * scrollFactorMultiplier
+
+                                if (totalDrag <= -adjustedFactor || totalDrag >= adjustedFactor) {
+                                    controller.updateSelectedTarget(totalDrag, scrollFactorMultiplier) // update number
                                     totalDrag = 0f
                                 }
                                 if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
                                 else repositionLineByDrag(dragAmount)
                             }
-
                         }
                     }
-
                     IncrementDirection.Up, IncrementDirection.Down -> {
                         detectVerticalDragGestures(
+                            onDragStart = { isDragging = true },
                             onDragEnd = {
+                                isDragging = false
                                 if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
                                 controller.triggerDragEnd()
                             }
                         ) { _, dragAmount ->
-                            totalDrag += dragAmount // calculate total drag distance
-                            controller.selectedTargetId?.let { // if target is selected
-                                val targetScrollDistanceFactor = controller.getTarget(it)!!.behaviour.scrollDistanceFactor
+                            totalDrag += dragAmount
 
-                                if (totalDrag <= -targetScrollDistanceFactor || totalDrag >= targetScrollDistanceFactor) {
-                                    controller.updateSelectedTarget(totalDrag) // update number
+                            controller.selectedTargetId?.let { id ->
+                                val target = controller.getTarget(id)!!
+
+                                if (target.behaviour.useDynamicDistanceFactor) {
+                                    val currentTime = System.currentTimeMillis()
+                                    val timeElapsed = currentTime - lastDragTime
+                                    lastDragTime = currentTime
+
+                                    val velocity = kotlin.math.abs(dragAmount / timeElapsed.coerceAtLeast(1))
+                                    scrollFactorMultiplier = computeScrollFactorMultiplier(velocity, target.behaviour.dynamicDistanceScalingFactor)
+                                }
+
+                                val adjustedFactor = target.behaviour.scrollDistanceFactor * scrollFactorMultiplier
+
+                                if (totalDrag <= -adjustedFactor || totalDrag >= adjustedFactor) {
+                                    controller.updateSelectedTarget(totalDrag, scrollFactorMultiplier)
                                     totalDrag = 0f
                                 }
                                 if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
@@ -366,9 +430,17 @@ fun ScrollerBox(
                 .align(Alignment.Center)
                 .clip(controller.scrollerStyle.lineRounding)
                 .background(controller.scrollerStyle.lineColor)
-
         )
     }
+}
+
+fun computeScrollFactorMultiplier(velocity: Float, scalingFactor: Float = 0f): Float {
+    // use scaling factor from target behaviour config or 0f (i.e. no scaling)
+    return 1f / (1 + scalingFactor * velocity * velocity) // inverse quadratic: f(x) = a / (b + x^2)
+}
+
+fun getDimensionPx(controller: ScrollerController, widthPx: Float, heightPx: Float): Float {
+    return if (controller.scrollerBehaviour.incrementDirection in listOf(IncrementDirection.Left, IncrementDirection.Right)) widthPx else heightPx
 }
 
 /**
@@ -392,4 +464,11 @@ fun NumberText(targetStyle: TargetStyle, step: Float, number: Float) {
     )
 }
 
-// NOTE: NEED TO REMOVE PARAM updateNumber from readme as its gone now
+// NOTE: basically i have a "dynamic" scroll distance factor that i need to make into a parameter
+// NOTE: it decreases the factor when scrolling fast (uses inverse quadratic func)
+// NOTE: above is finished, need to update KDoc for target behaviour now.
+
+// NOTE: here is the nice part:
+// NOTE: after making this into a param, make a param where if true, the scroller will keep
+// NOTE: incrementing the number if the offset is high/low unless the drag has finished, where
+// NOTE: the incrementing stops. Make it increment faster if offset is especially high.

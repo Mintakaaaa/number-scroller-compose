@@ -156,20 +156,27 @@ fun DetachedCustom() {
     // optional scroller & target behaviour parameters
     val scrollerBehaviour = DetachedScrollerBehaviour(
         syncLinePosWithNumber = false,
-        lineSpeed = 6f,
+        lineSpeed = 10f,
         incrementDirection = IncrementDirection.Right,
     )
-    val targetOneBehaviour = TargetBehaviour(
+    val targetOneBehaviour = TargetBehaviour( // uses auto increment when scrolling to end
         step = 2f,
-        startNumber = 2f,
-        range = 0f..20f,
-        scrollDistanceFactor = 20f
+        startNumber = 50f,
+        range = 0f..100f,
+        scrollDistanceFactor = 100f,
+
+        autoIncrementOnFarScroll = true,
+        autoIncrementDelay = 400,
+        farScrollThreshold = 0.9f
     )
-    val targetTwoBehaviour = TargetBehaviour(
+    val targetTwoBehaviour = TargetBehaviour( // uses dynamic scroll distance factor
         step = 0.5f,
         startNumber = -5f,
-        range = -10f..-5f,
-        scrollDistanceFactor = 300f
+        range = -10f..10f,
+        scrollDistanceFactor = 300f,
+
+        useDynamicDistanceFactor = true,
+        dynamicDistanceScalingFactor = 8f,
     )
     val defaultTargetBehaviour = TargetBehaviour(
         step = 1f,
