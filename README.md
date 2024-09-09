@@ -13,8 +13,8 @@ The `DetachedNumberScroller` component is a more advanced variation of the `Numb
 
 # Demo
 
-![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/number-scroller-demo-1.1.1.gif "Scroller Demo")
-![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.4.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/number-scroller-demo-1.1.5-final.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.5-final.gif "Scroller Demo")
 
 # Installation
 ## Gradle
