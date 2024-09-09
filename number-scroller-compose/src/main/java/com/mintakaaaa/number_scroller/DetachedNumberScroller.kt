@@ -4,13 +4,18 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,10 +30,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -71,6 +84,7 @@ data class DetachedScrollerStyle(
  * @property autoIncrementOnFarScroll Whether to increment the selected target automatically once a threshold is passed. Default is true.
  * @property farScrollThreshold The threshold that must be passed to activate auto incrementation of selected target. Default is 0.99f.
  * @property autoIncrementDelay The delay between automatic incrementing/decrementing of the selected target number. Default is 100.
+ * @property doubleTapToEdit Whether double-tapping a target should enable editing mode for that target. Default is false.
  */
 data class TargetBehaviour(
     val startNumber: Float = 0f,
@@ -82,6 +96,7 @@ data class TargetBehaviour(
     val autoIncrementOnFarScroll: Boolean = false,
     val farScrollThreshold: Float = 0.99f,
     val autoIncrementDelay: Long = 100,
+    val doubleTapToEdit: Boolean = false,
 )
 
 /**
@@ -129,6 +144,30 @@ class ScrollerController(
 
     var selectedTargetId: Int? by mutableStateOf(null)
         private set // set selected target by ID if one is found, else null
+
+    // ---------------------------------------------------------------------------------------------
+    // TARGET EDIT VARS / FUNCS
+    var editableTargetId by mutableStateOf<Int?>(null) // ID of currently editable target
+
+    var textFieldValue by mutableStateOf(TextFieldValue("")) // shared basic text field value
+    var isEditingTarget by mutableStateOf(false) // global target editing state
+    val focusRequester = FocusRequester() // shared focus requester for KB
+
+    fun startEditingTarget(targetId: Int, initialValue: Float) {
+        // if ends with .0, convert to Int, else, leave as is.
+        val formattedValue = if (initialValue % 1 == 0f) initialValue.toInt().toString()
+        else initialValue.toString()
+
+        editableTargetId = targetId
+        textFieldValue = TextFieldValue(formattedValue)
+        isEditingTarget = true
+    }
+
+    fun stopEditingTarget() {
+        editableTargetId = null
+        isEditingTarget = false
+    }
+    // ---------------------------------------------------------------------------------------------
 
     data class Target( // logical equivalent of ScrollerTarget composable
         val state: MutableFloatState,
@@ -225,10 +264,53 @@ fun ScrollerTarget(controller: ScrollerController, targetBehaviour: TargetBehavi
                 else controller.targetStyle.background
             )
             .padding(controller.targetStyle.boxPadding)
-            .clickable { controller.selectTarget(id) },
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        if (effectiveTargetBehaviour.doubleTapToEdit && !controller.isEditingTarget)
+                            controller.startEditingTarget(id, targetState.floatValue)
+                    },
+                    onPress = {
+                        if (!controller.isEditingTarget) controller.selectTarget(id)
+                    }
+                )
+            },
         contentAlignment = Alignment.Center
     ) {
-        NumberText(controller.targetStyle, step = effectiveTargetBehaviour.step, number = targetState.floatValue)
+        if (controller.editableTargetId == id && controller.isEditingTarget) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                BasicTextField(
+                    value = controller.textFieldValue,
+                    onValueChange = { newText -> controller.textFieldValue = newText },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            controller.stopEditingTarget()
+                            // set new number to new text field value within TargetBehaviour.range
+                            targetState.floatValue = controller.textFieldValue.text.toFloatOrNull()?.coerceIn(
+                                effectiveTargetBehaviour.range.start,
+                                effectiveTargetBehaviour.range.endInclusive
+                            ) ?: targetState.floatValue // retain old number if parsing fails
+                        }
+                    ),
+                    modifier = Modifier.focusRequester(controller.focusRequester),
+                    textStyle = TextStyle(fontWeight = FontWeight.Bold, color = controller.targetStyle.numberColor, textAlign = TextAlign.Center, fontSize = controller.targetStyle.numberFontSize)
+                )
+            }
+        } else { // not editing; show number composable
+            NumberText(controller.targetStyle, step = effectiveTargetBehaviour.step, number = targetState.floatValue)
+        }
+
+        // request focus and show keyboard on target-editing start
+        LaunchedEffect(controller.isEditingTarget, controller.editableTargetId) {
+            if (controller.isEditingTarget && controller.editableTargetId == id) {
+                controller.textFieldValue = controller.textFieldValue.copy(selection = TextRange(controller.textFieldValue.text.length)) // move cursor to end
+                controller.focusRequester.requestFocus()
+            }
+        }
     }
 }
 
@@ -335,73 +417,94 @@ fun ScrollerBox(
             .clip(controller.scrollerStyle.scrollerRounding)
             .background(controller.scrollerStyle.scrollerColor)
             .pointerInput(Unit) {
-                when (controller.scrollerBehaviour.incrementDirection) {
-                    IncrementDirection.Left, IncrementDirection.Right -> {
-                        detectHorizontalDragGestures(
-                            onDragStart = { isDragging = true },
-                            onDragEnd = {
-                                isDragging = false
-                                if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
-                                controller.triggerDragEnd()
-                            }
-                        ) { _, dragAmount ->
-                            totalDrag += dragAmount // calculate total drag distance
-
-                            controller.selectedTargetId?.let { id -> // if target is selected
-                                val target = controller.getTarget(id)!!
-
-                                if (target.behaviour.useDynamicDistanceFactor) {
-                                    val currentTime = System.currentTimeMillis()
-                                    val timeElapsed = currentTime - lastDragTime
-                                    lastDragTime = currentTime
-
-                                    // calculate drag velocity (drag amount / time elapsed)
-                                    val velocity = kotlin.math.abs(dragAmount / timeElapsed.coerceAtLeast(1))
-                                    scrollFactorMultiplier = computeScrollFactorMultiplier(velocity, target.behaviour.dynamicDistanceScalingFactor)
+                if (!controller.isEditingTarget) { // don't allow scrolling if editing target
+                    when (controller.scrollerBehaviour.incrementDirection) {
+                        IncrementDirection.Left, IncrementDirection.Right -> {
+                            detectHorizontalDragGestures(
+                                onDragStart = { isDragging = true },
+                                onDragEnd = {
+                                    isDragging = false
+                                    if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value =
+                                        0f
+                                    controller.triggerDragEnd()
                                 }
+                            ) { _, dragAmount ->
+                                totalDrag += dragAmount // calculate total drag distance
 
-                                val adjustedFactor = target.behaviour.scrollDistanceFactor * scrollFactorMultiplier
+                                controller.selectedTargetId?.let { id -> // if target is selected
+                                    val target = controller.getTarget(id)!!
 
-                                if (totalDrag <= -adjustedFactor || totalDrag >= adjustedFactor) {
-                                    controller.updateSelectedTarget(totalDrag, scrollFactorMultiplier) // update number
-                                    totalDrag = 0f
+                                    if (target.behaviour.useDynamicDistanceFactor) {
+                                        val currentTime = System.currentTimeMillis()
+                                        val timeElapsed = currentTime - lastDragTime
+                                        lastDragTime = currentTime
+
+                                        // calculate drag velocity (drag amount / time elapsed)
+                                        val velocity =
+                                            kotlin.math.abs(dragAmount / timeElapsed.coerceAtLeast(1))
+                                        scrollFactorMultiplier = computeScrollFactorMultiplier(
+                                            velocity,
+                                            target.behaviour.dynamicDistanceScalingFactor
+                                        )
+                                    }
+
+                                    val adjustedFactor =
+                                        target.behaviour.scrollDistanceFactor * scrollFactorMultiplier
+
+                                    if (totalDrag <= -adjustedFactor || totalDrag >= adjustedFactor) {
+                                        controller.updateSelectedTarget(
+                                            totalDrag,
+                                            scrollFactorMultiplier
+                                        ) // update number
+                                        totalDrag = 0f
+                                    }
+                                    if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
+                                    else repositionLineByDrag(dragAmount)
                                 }
-                                if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
-                                else repositionLineByDrag(dragAmount)
                             }
                         }
-                    }
-                    IncrementDirection.Up, IncrementDirection.Down -> {
-                        detectVerticalDragGestures(
-                            onDragStart = { isDragging = true },
-                            onDragEnd = {
-                                isDragging = false
-                                if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value = 0f
-                                controller.triggerDragEnd()
-                            }
-                        ) { _, dragAmount ->
-                            totalDrag += dragAmount
 
-                            controller.selectedTargetId?.let { id ->
-                                val target = controller.getTarget(id)!!
-
-                                if (target.behaviour.useDynamicDistanceFactor) {
-                                    val currentTime = System.currentTimeMillis()
-                                    val timeElapsed = currentTime - lastDragTime
-                                    lastDragTime = currentTime
-
-                                    val velocity = kotlin.math.abs(dragAmount / timeElapsed.coerceAtLeast(1))
-                                    scrollFactorMultiplier = computeScrollFactorMultiplier(velocity, target.behaviour.dynamicDistanceScalingFactor)
+                        IncrementDirection.Up, IncrementDirection.Down -> {
+                            detectVerticalDragGestures(
+                                onDragStart = { isDragging = true },
+                                onDragEnd = {
+                                    isDragging = false
+                                    if (!controller.scrollerBehaviour.syncLinePosWithNumber) lineOffset.value =
+                                        0f
+                                    controller.triggerDragEnd()
                                 }
+                            ) { _, dragAmount ->
+                                totalDrag += dragAmount
 
-                                val adjustedFactor = target.behaviour.scrollDistanceFactor * scrollFactorMultiplier
+                                controller.selectedTargetId?.let { id ->
+                                    val target = controller.getTarget(id)!!
 
-                                if (totalDrag <= -adjustedFactor || totalDrag >= adjustedFactor) {
-                                    controller.updateSelectedTarget(totalDrag, scrollFactorMultiplier)
-                                    totalDrag = 0f
+                                    if (target.behaviour.useDynamicDistanceFactor) {
+                                        val currentTime = System.currentTimeMillis()
+                                        val timeElapsed = currentTime - lastDragTime
+                                        lastDragTime = currentTime
+
+                                        val velocity =
+                                            kotlin.math.abs(dragAmount / timeElapsed.coerceAtLeast(1))
+                                        scrollFactorMultiplier = computeScrollFactorMultiplier(
+                                            velocity,
+                                            target.behaviour.dynamicDistanceScalingFactor
+                                        )
+                                    }
+
+                                    val adjustedFactor =
+                                        target.behaviour.scrollDistanceFactor * scrollFactorMultiplier
+
+                                    if (totalDrag <= -adjustedFactor || totalDrag >= adjustedFactor) {
+                                        controller.updateSelectedTarget(
+                                            totalDrag,
+                                            scrollFactorMultiplier
+                                        )
+                                        totalDrag = 0f
+                                    }
+                                    if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
+                                    else repositionLineByDrag(dragAmount)
                                 }
-                                if (controller.scrollerBehaviour.syncLinePosWithNumber) repositionLineByNumber()
-                                else repositionLineByDrag(dragAmount)
                             }
                         }
                     }
@@ -463,12 +566,3 @@ fun NumberText(targetStyle: TargetStyle, step: Float, number: Float) {
         textAlign = TextAlign.Center,
     )
 }
-
-// NOTE: basically i have a "dynamic" scroll distance factor that i need to make into a parameter
-// NOTE: it decreases the factor when scrolling fast (uses inverse quadratic func)
-// NOTE: above is finished, need to update KDoc for target behaviour now.
-
-// NOTE: here is the nice part:
-// NOTE: after making this into a param, make a param where if true, the scroller will keep
-// NOTE: incrementing the number if the offset is high/low unless the drag has finished, where
-// NOTE: the incrementing stops. Make it increment faster if offset is especially high.

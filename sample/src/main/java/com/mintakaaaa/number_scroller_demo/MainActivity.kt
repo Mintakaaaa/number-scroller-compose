@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -178,6 +179,14 @@ fun DetachedCustom() {
         useDynamicDistanceFactor = true,
         dynamicDistanceScalingFactor = 8f,
     )
+    val targetThreeBehaviour = TargetBehaviour( // uses double tap to edit
+        step = 4f,
+        startNumber = -4f,
+        range = -12f..12f,
+        scrollDistanceFactor = 100f,
+
+        doubleTapToEdit = true
+    )
     val defaultTargetBehaviour = TargetBehaviour(
         step = 1f,
         startNumber = 0f,
@@ -197,18 +206,24 @@ fun DetachedCustom() {
 
     // set up your scroller targets however you like, providing them with a unique ID
     Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
-        ScrollerTarget(controller = controller, targetBehaviour = targetOneBehaviour, id = 1, onDragEnd = { number ->
-            updateText(1, number)
-        })
-        Spacer(Modifier.width(10.dp))
-        ScrollerTarget(controller = controller, targetBehaviour = targetTwoBehaviour, id = 2, onDragEnd = { number ->
-            updateText(2, number)
-        })
-        Spacer(Modifier.width(10.dp))
-        // note below targets don't have targetBehaviour param... using default target behaviour...
-        ScrollerTarget(controller = controller, id = 3, onDragEnd = { number ->
-            updateText(3, number)
-        })
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "1", fontSize = 25.sp, modifier = Modifier.padding(bottom = 4.dp))
+            ScrollerTarget(controller = controller, targetBehaviour = targetOneBehaviour, id = 1, onDragEnd = { number ->
+                updateText(1, number)
+            })
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 10.dp)) {
+            Text(text = "2", fontSize = 25.sp, modifier = Modifier.padding(bottom = 4.dp))
+            ScrollerTarget(controller = controller, targetBehaviour = targetTwoBehaviour, id = 2, onDragEnd = { number ->
+                updateText(2, number)
+            })
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "3", fontSize = 25.sp, modifier = Modifier.padding(bottom = 4.dp))
+            ScrollerTarget(controller = controller, targetBehaviour = targetThreeBehaviour, id = 3, onDragEnd = { number ->
+                updateText(3, number)
+            })
+        }
     }
 
     Spacer(Modifier.height(10.dp))
@@ -217,8 +232,8 @@ fun DetachedCustom() {
         DetachedNumberScroller(controller = controller, linkedTo = listOf(1, 2, 3, 4, 5, 6))
     }
     Spacer(Modifier.height(10.dp))
-
     Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth(1f)) {
+        // note below targets don't have targetBehaviour param... using default target behaviour...
         ScrollerTarget(controller = controller, id = 4, onDragEnd = { number ->
             updateText(4, number)
         })
@@ -231,6 +246,10 @@ fun DetachedCustom() {
             updateText(6, number)
         })
     }
+
+    Text("1 - Auto increment on far scroll", fontSize = 25.sp, modifier = Modifier.padding(top = 40.dp))
+    Text("2 - Dynamic scroll distance factor", fontSize = 25.sp)
+    Text("3 - double tap to edit", fontSize = 25.sp)
 }
 
 @Composable
