@@ -2,7 +2,12 @@
 
 The `NumberScroller` component is a customisable UI element that allows users to scroll a number (decimals supported) through a specified range using up/down and left/right drag gestures. 
 
-The `DetachedNumberScroller` component is a more advanced variation of the `NumberScroller` with more customisation options support for more than one scrollable number. 
+The `DetachedNumberScroller` component is a more advanced variation of the `NumberScroller` with more customisation options, extra features, and support for more than one scrollable number. 
+
+`DetachedNumberScroller` extra features:
+1. Auto increment on far scroll
+2. Dynamic scroll distance for increment activation
+3. Double tap to edit number
 
 [![](https://jitpack.io/v/Mintakaaaa/number-scroller-compose.svg)](https://jitpack.io/#Mintakaaaa/number-scroller-compose)
 
