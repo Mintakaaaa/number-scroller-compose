@@ -9,7 +9,7 @@ The `DetachedNumberScroller` component is a more advanced variation of the `Numb
 # Demo
 
 ![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/number-scroller-demo-1.1.1.gif "Scroller Demo")
-![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.3.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.4.gif "Scroller Demo")
 
 # Installation
 ## Gradle
@@ -28,7 +28,7 @@ dependencyResolutionManagement {
 2. Add the dependency
 ```
 dependencies {
-  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.1.3'
+  implementation 'com.github.Mintakaaaa:number-scroller-compose:1.1.4'
 }
 ```
 ## Maven
@@ -46,7 +46,7 @@ dependencies {
 <dependency>
   <groupId>com.github.Mintakaaaa</groupId>
   <artifactId>number-scroller-compose</artifactId>
-  <version>1.1.3</version>
+  <version>1.1.4</version>
 </dependency>
 ```
 ## Sbt
@@ -58,7 +58,7 @@ resolvers += "jitpack" at "https://jitpack.io"
 ```
 2. Add the dependency
 ```
-libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.1.3"	
+libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.1.4"	
 ```
 ## Leiningen
 1. Add the JitPack repository to your build file
@@ -69,7 +69,7 @@ libraryDependencies += "com.github.Mintakaaaa" % "number-scroller-compose" % "1.
 ```
 2. Add the dependency
 ```
-:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.1.3"]]
+:dependencies [[com.github.Mintakaaaa/number-scroller-compose "1.1.4"]]
 ```
 
 # Using The Number Scroller
@@ -256,6 +256,13 @@ val targetTwoBehaviour = TargetBehaviour(
     dynamicDistanceScalingFactor = 8f,
 )
 
+val targetThreeBehaviour = TargetBehaviour(
+    step = 4f,
+    startNumber = 4f,
+    range = -12f..12f,
+    scrollDistanceFactor = 100f,
+    doubleTapToEdit = true,
+)
 
 val controller = remember { ScrollerController(
     scrollerStyle = customScrollerStyle,
@@ -268,11 +275,12 @@ ScrollerTarget(controller = controller, targetBehaviour = targetOneBehaviour, id
     // Do whatever you want with the resulting number upon scroll finish
 })
 ScrollerTarget(controller = controller, targetBehaviour = targetTwoBehaviour, id = 2)
-ScrollerTarget(controller = controller, id = 3) // this uses default target behaviour & does not return number
+ScrollerTarget(controller = controller, targerBehaviour = targetThreeBehaviour, id = 3)
+ScrollerTarget(controller = controller, id = 4) // this uses default target behaviour & does not return number
 
 DetachedNumberScroller(
     controller = controller,
-    linkedTo = listOf(1, 2, 3)
+    linkedTo = listOf(1, 2, 3, 4)
 )
 ```
 
@@ -312,7 +320,7 @@ Represents the behaviour options for the `ScrollerTarget`.
 | **autoIncrementOnFarScroll**     | `Boolean`                         | Whether to increment the selected target automatically once a threshold is passed.                                    | `true`        |
 | **farScrollThreshold**           | `Float`                           | The threshold that must be passed to activate auto incrementation of the selected target.                             | `0.99f`       |
 | **autoIncrementDelay**           | `Int`                             | The delay between automatic incrementing/decrementing of the selected target number.                                  | `100`         |
-
+| **doubleTapToEdit**              | `Boolean`                         | Whether double-tapping a target should enable editing mode for that target.                                           | `false`       |
 
 ### DetachedScrollerBehaviour
 
