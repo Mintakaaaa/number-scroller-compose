@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -47,6 +48,8 @@ import androidx.compose.ui.unit.sp
  * @property lineThickness The thickness of the scroller line, in density-independent pixels (dp). Default is 4.dp.
  * @property lineWidthFactor The proportion of the scroller width that the line occupies. Default is 0.8f.
  * @property numberFontSize The font size of the number text. Default is 30.sp.
+ * @property numberFontFamily The font family of the number. Default is FontFamily.SansSerif.
+ * @property numberFontWeight The font weight of the number. Default is FontWeight.Bold.
  * @property numberDistanceToScroller The distance between the number text and the scroller, in density-independent pixels (dp). Default is 30.dp.
  * @property numberPosition The position of the number relative to the scroller. Default is [NumberPosition.Left].
  */
@@ -61,6 +64,8 @@ data class ScrollerStyle(
     val lineThickness: Dp = 4.dp,
     val lineWidthFactor: Float = 0.8f,
     val numberFontSize: TextUnit = 30.sp,
+    val numberFontFamily: FontFamily = FontFamily.SansSerif,
+    val numberFontWeight: FontWeight = FontWeight.Bold,
     val numberDistanceToScroller: Dp = 30.dp,
     val numberPosition: NumberPosition = NumberPosition.Left,
 )
@@ -223,8 +228,9 @@ fun NumberText(style: ScrollerStyle, step: Float, number: Float) {
 
     Text(
         text = "${truncateTrailingZeros(formattedNumber)}",
+        fontFamily = style.numberFontFamily,
         fontSize = style.numberFontSize,
-        fontWeight = FontWeight.Bold,
+        fontWeight = style.numberFontWeight,
         color = style.numberColor,
         textAlign = TextAlign.Center,
     )

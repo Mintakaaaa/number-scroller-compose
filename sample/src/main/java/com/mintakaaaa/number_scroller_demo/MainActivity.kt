@@ -26,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mintakaaaa.number_scroller.DetachedNumberScroller
@@ -45,8 +47,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-//            NumberScrollerSample()
-            DetachedScrollerSample()
+            NumberScrollerSample()
+//            DetachedScrollerSample()
         }
     }
 }
@@ -136,7 +138,7 @@ fun DetachedDefault() {
 fun DetachedCustom() {
     // optional scroller & target styles
     val detachedStyle = DetachedScrollerStyle(
-        scrollerWidth = 300.dp,
+        scrollerWidth = 260.dp,
         scrollerHeight = 20.dp,
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(20.dp),
@@ -147,11 +149,13 @@ fun DetachedCustom() {
     )
     val targetStyle = TargetStyle(
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        numberFontSize = 25.sp,
+        numberFontSize = 22.sp,
+        numberFontFamily = FontFamily.Monospace,
+        numberFontWeight = FontWeight.SemiBold,
         background = MaterialTheme.colorScheme.primaryContainer,
         selectedBackground = MaterialTheme.colorScheme.tertiaryContainer,
         boxRounding = RoundedCornerShape(6.dp),
-        boxWidth = 60.dp,
+        boxWidth = 80.dp,
         boxHeight = 40.dp
     )
     // optional scroller & target behaviour parameters
@@ -271,6 +275,8 @@ fun One() {
         scrollerRounding = RoundedCornerShape(20.dp),
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
+        numberFontFamily = FontFamily.Monospace,
+        numberFontWeight = FontWeight.SemiBold,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
         numberPosition = NumberPosition.Above,
         lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -305,6 +311,8 @@ fun Two() {
         scrollerRounding = RoundedCornerShape(20.dp),
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
+        numberFontFamily = FontFamily.Monospace,
+        numberFontWeight = FontWeight.SemiBold,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
         numberPosition = NumberPosition.Right,
         lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -338,10 +346,12 @@ fun Three() {
         scrollerRounding = RoundedCornerShape(20.dp),
         numberFontSize = 30.sp,
         numberDistanceToScroller = 30.dp,
+        numberFontFamily = FontFamily.Cursive,
+        numberFontWeight = FontWeight.Bold,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
         numberPosition = NumberPosition.Left,
         lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        lineWidthFactor = 0.03f,
+        lineWidthFactor = 0.4f,
         lineThickness = 8.dp,
         lineRounding = RoundedCornerShape(5.dp),
     )
@@ -382,6 +392,8 @@ fun Four() {
         scrollerColor = MaterialTheme.colorScheme.primaryContainer,
         scrollerRounding = RoundedCornerShape(10.dp),
         numberFontSize = 30.sp,
+        numberFontFamily = FontFamily.Cursive,
+        numberFontWeight = FontWeight.Bold,
         numberDistanceToScroller = 0.dp,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
         numberPosition = NumberPosition.Below,

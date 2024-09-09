@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -116,6 +117,8 @@ data class DetachedScrollerBehaviour(
  *
  * @property numberColor The color of the number displayed in the target. Default is Color.Black.
  * @property numberFontSize The font size of the number, in scaled pixels (sp). Default is 30.sp.
+ * @property numberFontFamily The font family of the number. Default is FontFamily.SansSerif.
+ * @property numberFontWeight The font weight of the number. Default is FontWeight.Bold.
  * @property boxPadding The padding around the number within the target box, in density-independent pixels (dp). Default is 5.dp.
  * @property boxWidth The width of the target box, in density-independent pixels (dp). Default is 50.dp.
  * @property boxHeight The height of the target box, in density-independent pixels (dp). Default is 50.dp.
@@ -126,6 +129,8 @@ data class DetachedScrollerBehaviour(
 data class TargetStyle(
     val numberColor: Color = Color.Black,
     val numberFontSize: TextUnit = 25.sp,
+    val numberFontFamily: FontFamily = FontFamily.SansSerif,
+    val numberFontWeight: FontWeight = FontWeight.Bold,
     val boxPadding: Dp = 5.dp,
     val boxWidth: Dp = 50.dp,
     val boxHeight: Dp = 50.dp,
@@ -295,11 +300,11 @@ fun ScrollerTarget(controller: ScrollerController, targetBehaviour: TargetBehavi
                                 effectiveTargetBehaviour.range.endInclusive
                             ) ?: targetState.floatValue // retain old number if parsing fails
 
-                            controller.triggerDragEnd() // trigger callback to pass new target #
+                            controller.triggerDragEnd() // trigger callback to pass new target number
                         }
                     ),
                     modifier = Modifier.focusRequester(controller.focusRequester),
-                    textStyle = TextStyle(fontWeight = FontWeight.Bold, color = controller.targetStyle.numberColor, textAlign = TextAlign.Center, fontSize = controller.targetStyle.numberFontSize)
+                    textStyle = TextStyle(fontFamily = controller.targetStyle.numberFontFamily, fontWeight = controller.targetStyle.numberFontWeight, color = controller.targetStyle.numberColor, textAlign = TextAlign.Center, fontSize = controller.targetStyle.numberFontSize)
                 )
             }
         } else { // not editing; show number composable
@@ -562,8 +567,9 @@ fun NumberText(targetStyle: TargetStyle, step: Float, number: Float) {
 
     Text(
         text = "${truncateTrailingZeros(formattedNumber)}",
+        fontFamily = targetStyle.numberFontFamily,
         fontSize = targetStyle.numberFontSize,
-        fontWeight = FontWeight.Bold,
+        fontWeight = targetStyle.numberFontWeight,
         color = targetStyle.numberColor,
         textAlign = TextAlign.Center,
     )
