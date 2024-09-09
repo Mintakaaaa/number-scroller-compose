@@ -294,6 +294,8 @@ fun ScrollerTarget(controller: ScrollerController, targetBehaviour: TargetBehavi
                                 effectiveTargetBehaviour.range.start,
                                 effectiveTargetBehaviour.range.endInclusive
                             ) ?: targetState.floatValue // retain old number if parsing fails
+
+                            controller.triggerDragEnd() // trigger callback to pass new target #
                         }
                     ),
                     modifier = Modifier.focusRequester(controller.focusRequester),
