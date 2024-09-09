@@ -13,8 +13,8 @@ The `DetachedNumberScroller` component is a more advanced variation of the `Numb
 
 # Demo
 
-![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/number-scroller-demo-1.1.1.gif "Scroller Demo")
-![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.4.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/number-scroller-demo-1.1.5-final.gif "Scroller Demo")
+![alt text](https://github.com/Mintakaaaa/number-scroller-compose/blob/main/images/detached-scroller-demo-1.1.5-final.gif "Scroller Demo")
 
 # Installation
 ## Gradle
@@ -99,6 +99,8 @@ val customStyle = ScrollerStyle(
         lineColor = MaterialTheme.colorScheme.onPrimaryContainer,
         numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
         numberFontSize = 30.sp,
+        numberFontFamily = FontFamily.Monospace,
+        numberFontWeight = FontWeight.SemiBold,
         numberDistanceToScroller = 30.dp,
         numberPosition = NumberPosition.Above,
         lineWidthFactor = 0.5f,
@@ -140,6 +142,8 @@ Defines the styling options for the `NumberScroller`.
 | **lineThickness**            | `Dp`                  | The thickness of the scroller line.                          | `4.dp`                     |
 | **lineWidthFactor**          | `Float`               | The proportion of the scroller width that the line occupies. | `0.8f`                     |
 | **numberFontSize**           | `TextUnit`            | The font size of the number text.                            | `30.sp`                    |
+| **numberFontFamily**         | `FontFamily`          | The font fmaily of the number text.                          | `FontFamily.SansSerif`     |
+| **numberFontWeight**         | `FontWeight`          | The font weight of the number text.                          | `FontWeight.Bold`          |
 | **numberDistanceToScroller** | `Dp`                  | The distance between the number text and the scroller.       | `30.dp`                    |
 | **numberPosition**           | `NumberPosition`      | The position of the number relative to the scroller.         | `NumberPosition.Left`      |
 
@@ -221,6 +225,8 @@ val customScrollerStyle = DetachedScrollerStyle(
 val customTargetStyle = TargetStyle(
     numberColor = MaterialTheme.colorScheme.onPrimaryContainer,
     numberFontSize = 30.sp,
+    numberFontFamily = FontFamily.Monospace,
+    numberFontWeight = FontWeight.SemiBold,
     boxPadding = 10.dp,
     boxWidth = 60.dp,
     boxHeight = 60.dp,
@@ -345,6 +351,8 @@ Defines the styling options for the `ScrollerTarget`.
 |------------------------|----------------------|-------------------------------------------------------|----------------------------|
 | **numberColor**        | `Color`              | The color of the number displayed in the target.      | `Color.Black`              |
 | **numberFontSize**     | `TextUnit`           | The font size of the number, in scaled pixels (sp).   | `25.sp`                    |
+| **numberFontFamily**   | `FontFamily`         | The font fmaily of the number.                        | `FontFamily.SansSerif`     |
+| **numberFontWeight**   | `FontWeight`         | The font weight of the number text.                   | `FontWeight.Bold`          |
 | **boxPadding**         | `Dp`                 | The padding around the number within the target box.  | `5.dp`                     |
 | **boxWidth**           | `Dp`                 | The width of the target box.                          | `50.dp`                    |
 | **boxHeight**          | `Dp`                 | The height of the target box.                         | `50.dp`                    |
