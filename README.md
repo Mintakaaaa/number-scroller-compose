@@ -143,7 +143,7 @@ Defines the styling options for the `NumberScroller`.
 | **lineWidthFactor**          | `Float`               | The proportion of the scroller width that the line occupies. | `0.8f`                     |
 | **numberFontSize**           | `TextUnit`            | The font size of the number text.                            | `30.sp`                    |
 | **numberFontFamily**         | `FontFamily`          | The font fmaily of the number text.                          | `FontFamily.SansSerif`     |
-| **numberFontWeight**         | `TextUnit`            | The font size of the number text.                            | `30.sp`                    |
+| **numberFontWeight**         | `FontWeight`          | The font weight of the number text.                          | `FontWeight.Bold`          |
 | **numberDistanceToScroller** | `Dp`                  | The distance between the number text and the scroller.       | `30.dp`                    |
 | **numberPosition**           | `NumberPosition`      | The position of the number relative to the scroller.         | `NumberPosition.Left`      |
 
@@ -352,7 +352,7 @@ Defines the styling options for the `ScrollerTarget`.
 | **numberColor**        | `Color`              | The color of the number displayed in the target.      | `Color.Black`              |
 | **numberFontSize**     | `TextUnit`           | The font size of the number, in scaled pixels (sp).   | `25.sp`                    |
 | **numberFontFamily**   | `FontFamily`         | The font fmaily of the number.                        | `FontFamily.SansSerif`     |
-| **numberFontWeight**   | `TextUnit`           | The font size of the number.                          | `30.sp`                    |
+| **numberFontWeight**   | `FontWeight`         | The font weight of the number text.                   | `FontWeight.Bold`          |
 | **boxPadding**         | `Dp`                 | The padding around the number within the target box.  | `5.dp`                     |
 | **boxWidth**           | `Dp`                 | The width of the target box.                          | `50.dp`                    |
 | **boxHeight**          | `Dp`                 | The height of the target box.                         | `50.dp`                    |
